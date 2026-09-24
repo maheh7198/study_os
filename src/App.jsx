@@ -39,6 +39,10 @@ import Subjects from "./Subjects.jsx";
 import Tasks from "./Tasks.jsx";
 import Notes from "./Notes.jsx";
 import Goals from "./Goals.jsx";
+import StudyPlan from "./StudyPlan.jsx";
+import Pomodoro from "./Pomodoro.jsx";
+import HabitTracker from "./HabitTracker.jsx";
+
 
 import "./App.css";
 
@@ -557,8 +561,23 @@ function App() {
   <Notes
     subjects={subjects}
     setNotifications={setNotifications}
-  />) : activePage === "Goals" ? (
+  />
+) : activePage === "Goals" ? (
   <Goals
+    setNotifications={setNotifications}
+  />
+) : activePage === "Study Plan" ? (
+  <StudyPlan
+    subjects={subjects}
+    setNotifications={setNotifications}
+  />
+) : activePage === "Pomodoro" ? (
+  <Pomodoro
+    subjects={subjects}
+    setNotifications={setNotifications}
+  />
+  ) : activePage === "Habit Tracker" ? (
+  <HabitTracker
     setNotifications={setNotifications}
   />
 ) : (
@@ -567,6 +586,7 @@ function App() {
     setAiOpen={setAiOpen}
   />
 )}
+
         {/* ===================================================
             FOOTER
             =================================================== */}

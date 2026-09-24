@@ -1,0 +1,2000 @@
+/* =========================================================
+   STUDYOS — STUDY PLAN
+   Premium Indigo / Light Theme
+   ========================================================= */
+
+.studyplan-page {
+  --sp-primary: #4f46e5;
+  --sp-primary-dark: #4338ca;
+  --sp-purple: #7c3aed;
+  --sp-cyan: #06b6d4;
+  --sp-green: #10b981;
+  --sp-orange: #f59e0b;
+  --sp-red: #ef4444;
+
+  --sp-bg: #f3f7ff;
+  --sp-card: #ffffff;
+  --sp-border: #e5eaf4;
+  --sp-text: #0f172a;
+  --sp-muted: #64748b;
+  --sp-soft: #f8faff;
+
+  width: 100%;
+  min-height: 100%;
+  padding: 28px 30px 42px;
+  box-sizing: border-box;
+  background: var(--sp-bg);
+  color: var(--sp-text);
+  font-family: inherit;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.studyplan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+.studyplan-title-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+
+.studyplan-title-icon {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
+
+.studyplan-title-area h1 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  color: var(--sp-text);
+}
+
+.studyplan-title-area p {
+  margin: 5px 0 0;
+  color: var(--sp-muted);
+  font-size: 14px;
+}
+
+.studyplan-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.studyplan-primary-btn,
+.studyplan-secondary-btn,
+.studyplan-add-plan-btn,
+.studyplan-cancel-btn {
+  height: 42px;
+  border-radius: 11px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.studyplan-primary-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  box-shadow: 0 7px 18px rgba(79, 70, 229, 0.2);
+}
+
+.studyplan-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.27);
+}
+
+.studyplan-secondary-btn,
+.studyplan-cancel-btn {
+  color: #334155;
+  background: #fff;
+  border-color: var(--sp-border);
+}
+
+.studyplan-secondary-btn:hover,
+.studyplan-cancel-btn:hover {
+  border-color: #c7d2fe;
+  background: #fafaff;
+}
+
+.studyplan-add-plan-btn {
+  color: var(--sp-primary);
+  background: #eef2ff;
+  border-color: #e0e7ff;
+}
+
+.studyplan-add-plan-btn:hover {
+  background: #e0e7ff;
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+.studyplan-toast {
+  position: fixed;
+  top: 86px;
+  right: 28px;
+  z-index: 11000;
+  min-width: 290px;
+  max-width: 390px;
+  min-height: 48px;
+  padding: 12px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  animation: studyplanToastIn 0.25s ease;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.studyplan-toast.success {
+  color: #047857;
+}
+
+.studyplan-toast.error {
+  color: #b91c1c;
+}
+
+.studyplan-toast span {
+  flex: 1;
+}
+
+.studyplan-toast button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-toast button:hover {
+  background: #f1f5f9;
+}
+
+@keyframes studyplanToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.studyplan-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.studyplan-stat-card {
+  min-height: 88px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid var(--sp-border);
+  border-radius: 15px;
+  background: var(--sp-card);
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.035);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.studyplan-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.07);
+}
+
+.studyplan-stat-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.studyplan-stat-icon.indigo {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-stat-icon.purple {
+  color: #7c3aed;
+  background: #f3e8ff;
+}
+
+.studyplan-stat-icon.cyan {
+  color: #0891b2;
+  background: #cffafe;
+}
+
+.studyplan-stat-icon.green {
+  color: #059669;
+  background: #d1fae5;
+}
+
+.studyplan-stat-content {
+  min-width: 0;
+}
+
+.studyplan-stat-content span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--sp-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.studyplan-stat-content strong {
+  display: block;
+  color: var(--sp-text);
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   MAIN TABS
+   ========================================================= */
+
+.studyplan-main-tabs {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin-bottom: 18px;
+  padding: 4px;
+  border: 1px solid var(--sp-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.studyplan-main-tabs button {
+  height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 9px;
+  color: #64748b;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.studyplan-main-tabs button:hover {
+  color: var(--sp-primary);
+}
+
+.studyplan-main-tabs button.active {
+  color: #fff;
+  background: var(--sp-primary);
+  box-shadow: 0 5px 12px rgba(79, 70, 229, 0.2);
+}
+
+
+/* =========================================================
+   PLANNER TOOLBAR
+   ========================================================= */
+
+.studyplan-planner-toolbar {
+  min-height: 66px;
+  padding: 11px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--sp-border);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.025);
+  margin-bottom: 18px;
+}
+
+.studyplan-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.studyplan-view-tabs button {
+  height: 36px;
+  min-width: 62px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.studyplan-view-tabs button:hover {
+  background: #f8faff;
+}
+
+.studyplan-view-tabs button.active {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-date-navigation {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.studyplan-date-navigation > button {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sp-border);
+  border-radius: 8px;
+  color: #64748b;
+  background: #fff;
+  cursor: pointer;
+}
+
+.studyplan-date-navigation > button:hover {
+  color: var(--sp-primary);
+  border-color: #c7d2fe;
+  background: #f8faff;
+}
+
+.studyplan-date-navigation .studyplan-today-btn {
+  width: auto;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.studyplan-current-date {
+  margin-left: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   DAY LAYOUT
+   ========================================================= */
+
+.studyplan-day-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 18px;
+}
+
+.studyplan-day-card,
+.studyplan-mini-calendar,
+.studyplan-active-plans,
+.studyplan-week-view,
+.studyplan-month-view,
+.studyplan-timetable {
+  border: 1px solid var(--sp-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.03);
+}
+
+.studyplan-day-card {
+  min-width: 0;
+  padding: 22px;
+}
+
+.studyplan-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.studyplan-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: #818cf8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.studyplan-section-header h2,
+.studyplan-week-header h2,
+.studyplan-month-header h2,
+.studyplan-timetable-header h2 {
+  margin: 0;
+  color: var(--sp-text);
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.studyplan-day-count {
+  min-width: 62px;
+  padding: 9px 12px;
+  text-align: center;
+  border-radius: 11px;
+  color: #4f46e5;
+  background: #eef2ff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.studyplan-day-count span {
+  display: block;
+  margin-top: 1px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.studyplan-empty-state {
+  min-height: 330px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 35px;
+}
+
+.studyplan-empty-icon {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff, #f3e8ff);
+}
+
+.studyplan-empty-state h3 {
+  margin: 0 0 6px;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.studyplan-empty-state p {
+  margin: 0 0 18px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SESSION LIST
+   ========================================================= */
+
+.studyplan-session-list {
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.studyplan-session-card {
+  min-height: 100px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 65px 3px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  border: 1px solid #e7ebf3;
+  border-radius: 13px;
+  background: #fff;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.studyplan-session-card:hover {
+  transform: translateY(-1px);
+  border-color: #d5dcf0;
+  box-shadow: 0 7px 20px rgba(15, 23, 42, 0.055);
+}
+
+.studyplan-session-card.completed {
+  background: #fbfffd;
+}
+
+.studyplan-session-time {
+  text-align: center;
+}
+
+.studyplan-session-time strong {
+  display: block;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.studyplan-session-time span {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.studyplan-session-line {
+  width: 3px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #6366f1, #a855f7);
+}
+
+.studyplan-session-main {
+  min-width: 0;
+}
+
+.studyplan-session-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.studyplan-session-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-session-heading h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.studyplan-session-meta {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.studyplan-session-meta .dot {
+  color: #cbd5e1;
+}
+
+.studyplan-session-description {
+  margin: 9px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.studyplan-session-tags {
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.studyplan-tag {
+  height: 25px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.studyplan-priority {
+  height: 25px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.studyplan-priority.low {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.studyplan-priority.medium {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.studyplan-priority.high {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.studyplan-session-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.studyplan-session-actions button {
+  width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-session-actions button:hover {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-session-actions button.danger:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.studyplan-session-actions .studyplan-complete-btn {
+  color: #94a3b8;
+}
+
+.studyplan-session-actions .studyplan-complete-btn.completed {
+  color: #10b981;
+  background: #d1fae5;
+}
+
+
+/* =========================================================
+   SIDE PANEL
+   ========================================================= */
+
+.studyplan-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.studyplan-mini-calendar {
+  padding: 17px;
+}
+
+.studyplan-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.studyplan-calendar-header strong {
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.studyplan-calendar-header button {
+  width: 29px;
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 7px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-calendar-header button:hover {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-weekdays,
+.studyplan-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.studyplan-weekdays span {
+  padding: 5px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.studyplan-calendar-grid button {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 8px;
+  color: #334155;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.studyplan-calendar-grid button:hover {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.studyplan-calendar-grid button.muted {
+  color: #cbd5e1;
+}
+
+.studyplan-calendar-grid button.selected {
+  color: #fff;
+  background: #4f46e5;
+  box-shadow: 0 5px 12px rgba(79, 70, 229, 0.22);
+}
+
+.studyplan-calendar-grid button.today:not(.selected) {
+  color: #4f46e5;
+  box-shadow: inset 0 0 0 1px #a5b4fc;
+}
+
+.calendar-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #a855f7;
+  transform: translateX(-50%);
+}
+
+.studyplan-calendar-grid button.selected .calendar-dot {
+  background: #fff;
+}
+
+
+/* =========================================================
+   ACTIVE PLANS
+   ========================================================= */
+
+.studyplan-active-plans {
+  padding: 17px;
+}
+
+.studyplan-side-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.studyplan-side-title h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.studyplan-side-title > button {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: #4f46e5;
+  background: #eef2ff;
+  cursor: pointer;
+}
+
+.studyplan-plan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.studyplan-plan-card {
+  padding: 12px;
+  border: 1px solid #e7ebf3;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.studyplan-plan-card:hover {
+  border-color: #c7d2fe;
+  background: #fafaff;
+}
+
+.studyplan-plan-card.selected {
+  border-color: #a5b4fc;
+  background: #f8f8ff;
+  box-shadow: 0 5px 15px rgba(79, 70, 229, 0.06);
+}
+
+.studyplan-plan-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.studyplan-plan-icon {
+  width: 31px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #7c3aed;
+  background: #f3e8ff;
+}
+
+.studyplan-plan-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.studyplan-plan-actions button {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  color: #94a3b8;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-plan-actions button:hover {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.studyplan-plan-actions button.danger:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.studyplan-plan-card h4 {
+  margin: 9px 0 3px;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.studyplan-plan-card > p {
+  margin: 0 0 8px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.studyplan-plan-dates {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.studyplan-progress {
+  margin-top: 10px;
+}
+
+.studyplan-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.studyplan-progress-label strong {
+  color: #4f46e5;
+}
+
+.studyplan-progress-track {
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #e9edf5;
+}
+
+.studyplan-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f46e5, #a855f7);
+  transition: width 0.3s ease;
+}
+
+.studyplan-small-empty {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  border: 1px dashed #dbe3ef;
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   WEEK VIEW
+   ========================================================= */
+
+.studyplan-week-view {
+  padding: 21px;
+}
+
+.studyplan-week-header,
+.studyplan-month-header,
+.studyplan-timetable-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.studyplan-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.studyplan-week-day {
+  min-width: 0;
+  min-height: 360px;
+  padding: 8px;
+  border: 1px solid #e7ebf3;
+  border-radius: 12px;
+  background: #fbfcff;
+}
+
+.studyplan-week-day.selected {
+  border-color: #a5b4fc;
+  background: #f8f8ff;
+}
+
+.studyplan-week-day-header {
+  width: 100%;
+  padding: 9px 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 9px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-week-day-header:hover {
+  background: #eef2ff;
+}
+
+.studyplan-week-day-header span {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.studyplan-week-day-header strong {
+  width: 27px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #334155;
+  background: #eef2f7;
+  font-size: 11px;
+}
+
+.studyplan-week-day.selected .studyplan-week-day-header strong {
+  color: #fff;
+  background: #4f46e5;
+}
+
+.studyplan-week-day-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.studyplan-week-session {
+  position: relative;
+  width: 100%;
+  padding: 8px;
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  text-align: left;
+  border: 1px solid #e1e7f1;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.studyplan-week-session:hover {
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
+}
+
+.studyplan-week-session .session-time {
+  margin-bottom: 3px;
+  color: #6366f1;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.studyplan-week-session strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studyplan-week-session small {
+  margin-top: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studyplan-week-session > svg {
+  position: absolute;
+  top: 8px;
+  right: 7px;
+  color: #10b981;
+}
+
+.studyplan-week-session.completed {
+  opacity: 0.72;
+  background: #f0fdf4;
+}
+
+.studyplan-no-session {
+  padding: 14px 4px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 9px;
+}
+
+.studyplan-day-add {
+  width: 100%;
+  height: 30px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed #dbe3ef;
+  border-radius: 8px;
+  color: #94a3b8;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.studyplan-day-add:hover {
+  color: #4f46e5;
+  border-color: #a5b4fc;
+  background: #eef2ff;
+}
+
+
+/* =========================================================
+   MONTH VIEW
+   ========================================================= */
+
+.studyplan-month-view {
+  padding: 21px;
+}
+
+.studyplan-month-header {
+  margin-bottom: 17px;
+}
+
+.studyplan-month-header h2 {
+  margin-top: 2px;
+}
+
+.studyplan-month-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.studyplan-month-actions button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sp-border);
+  border-radius: 9px;
+  color: #64748b;
+  background: #fff;
+  cursor: pointer;
+}
+
+.studyplan-month-actions button:hover {
+  color: #4f46e5;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.studyplan-month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid #e7ebf3;
+  border-bottom: 0;
+  border-radius: 11px 11px 0 0;
+  overflow: hidden;
+}
+
+.studyplan-month-weekdays span {
+  padding: 10px;
+  color: #64748b;
+  background: #f8faff;
+  border-right: 1px solid #e7ebf3;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.studyplan-month-weekdays span:last-child {
+  border-right: 0;
+}
+
+.studyplan-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-left: 1px solid #e7ebf3;
+}
+
+.studyplan-month-day {
+  min-height: 115px;
+  padding: 8px;
+  overflow: hidden;
+  border: 0;
+  border-right: 1px solid #e7ebf3;
+  border-bottom: 1px solid #e7ebf3;
+  color: #334155;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.studyplan-month-day:hover {
+  background: #fafaff;
+}
+
+.studyplan-month-day.muted {
+  color: #cbd5e1;
+  background: #fafbfe;
+}
+
+.studyplan-month-day.selected {
+  box-shadow: inset 0 0 0 2px #818cf8;
+  background: #f8f8ff;
+}
+
+.month-day-number {
+  width: 27px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.studyplan-month-day.today .month-day-number {
+  color: #fff;
+  background: #4f46e5;
+}
+
+.month-day-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.month-session {
+  display: block;
+  overflow: hidden;
+  padding: 4px 5px;
+  border-radius: 5px;
+  color: #4f46e5;
+  background: #eef2ff;
+  font-size: 8px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-session.completed {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.month-more {
+  color: #94a3b8;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   TIMETABLE
+   ========================================================= */
+
+.studyplan-timetable {
+  padding: 21px;
+  overflow: hidden;
+}
+
+.studyplan-timetable-header {
+  margin-bottom: 20px;
+}
+
+.studyplan-timetable-header p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.studyplan-timetable-grid {
+  min-width: 930px;
+  display: grid;
+  grid-template-columns: 78px repeat(7, minmax(105px, 1fr));
+  border-top: 1px solid #e7ebf3;
+  border-left: 1px solid #e7ebf3;
+  border-radius: 11px;
+  overflow: hidden;
+}
+
+.studyplan-timetable-corner,
+.studyplan-timetable-day {
+  min-height: 43px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-right: 1px solid #e7ebf3;
+  border-bottom: 1px solid #e7ebf3;
+  color: #64748b;
+  background: #f8faff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.studyplan-timetable-day {
+  color: #334155;
+}
+
+.studyplan-timetable-row {
+  display: contents;
+}
+
+.studyplan-timetable-time {
+  min-height: 65px;
+  padding: 9px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  border-right: 1px solid #e7ebf3;
+  border-bottom: 1px solid #e7ebf3;
+  color: #94a3b8;
+  background: #fbfcff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.studyplan-timetable-cell {
+  min-height: 65px;
+  padding: 4px;
+  border-right: 1px solid #e7ebf3;
+  border-bottom: 1px solid #e7ebf3;
+  background: #fff;
+}
+
+.studyplan-empty-slot {
+  width: 100%;
+  height: 100%;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed transparent;
+  border-radius: 7px;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
+.studyplan-empty-slot:hover {
+  color: #6366f1;
+  border-color: #c7d2fe;
+  background: #f8faff;
+}
+
+.studyplan-timetable-slot {
+  min-height: 56px;
+  padding: 7px;
+  border-radius: 7px;
+  color: #3730a3;
+  background: #eef2ff;
+  overflow: hidden;
+}
+
+.studyplan-timetable-slot.purple {
+  color: #6d28d9;
+  background: #f3e8ff;
+}
+
+.studyplan-timetable-slot.cyan {
+  color: #0e7490;
+  background: #cffafe;
+}
+
+.studyplan-timetable-slot.green {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.studyplan-timetable-slot.orange {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.timetable-slot-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+}
+
+.timetable-slot-top > span {
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timetable-slot-top > div {
+  display: flex;
+  gap: 1px;
+}
+
+.timetable-slot-top button {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  color: currentColor;
+  background: transparent;
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+.timetable-slot-top button:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.studyplan-timetable-slot > strong {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: inherit;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studyplan-timetable-slot > small {
+  display: block;
+  margin-top: 2px;
+  color: currentColor;
+  opacity: 0.72;
+  font-size: 7px;
+}
+
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.studyplan-modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 280px;
+
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 22px;
+  box-sizing: border-box;
+
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(5px);
+
+  animation: studyplanOverlayIn 0.18s ease;
+}
+.studyplan-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow-y: auto;
+  border: 1px solid #e1e7f1;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.2);
+  animation: studyplanModalIn 0.22s ease;
+}
+
+.studyplan-plan-modal {
+  width: min(570px, 100%);
+}
+
+@keyframes studyplanOverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes studyplanModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.studyplan-modal-header {
+  padding: 19px 21px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.studyplan-modal-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.studyplan-modal-header > button {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: #64748b;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.studyplan-modal-header > button:hover {
+  color: #1e293b;
+  background: #eef2f7;
+}
+
+.studyplan-form {
+  padding: 20px 21px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.studyplan-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.studyplan-form-group {
+  min-width: 0;
+}
+
+.studyplan-form-group.full {
+  width: 100%;
+}
+
+.studyplan-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.studyplan-form-group input,
+.studyplan-form-group select,
+.studyplan-form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dce3ee;
+  border-radius: 9px;
+  outline: none;
+  color: #1e293b;
+  background: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.studyplan-form-group input,
+.studyplan-form-group select {
+  height: 41px;
+  padding: 0 11px;
+}
+
+.studyplan-form-group textarea {
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.studyplan-form-group input::placeholder,
+.studyplan-form-group textarea::placeholder {
+  color: #a8b2c2;
+}
+
+.studyplan-form-group input:focus,
+.studyplan-form-group select:focus,
+.studyplan-form-group textarea:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.studyplan-form-error {
+  margin: 15px 21px 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.studyplan-modal-footer {
+  padding: 15px 21px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  border-top: 1px solid #edf1f7;
+}
+
+.studyplan-color-options {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.studyplan-color-option {
+  width: 31px;
+  height: 31px;
+  border: 3px solid #fff;
+  border-radius: 9px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px #dbe3ef;
+  transition: 0.18s ease;
+}
+
+.studyplan-color-option:hover {
+  transform: translateY(-1px);
+}
+
+.studyplan-color-option.selected {
+  box-shadow:
+    0 0 0 2px #6366f1,
+    0 4px 10px rgba(79, 70, 229, 0.18);
+}
+
+.studyplan-color-option.indigo {
+  background: #6366f1;
+}
+
+.studyplan-color-option.purple {
+  background: #8b5cf6;
+}
+
+.studyplan-color-option.cyan {
+  background: #06b6d4;
+}
+
+.studyplan-color-option.green {
+  background: #10b981;
+}
+
+.studyplan-color-option.orange {
+  background: #f59e0b;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .studyplan-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .studyplan-day-layout {
+    grid-template-columns: minmax(0, 1fr) 290px;
+  }
+
+  .studyplan-week-grid {
+    overflow-x: auto;
+    grid-template-columns: repeat(7, minmax(145px, 1fr));
+  }
+
+  .studyplan-week-day {
+    min-width: 145px;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 850px) {
+  .studyplan-page {
+    padding: 20px 16px 35px;
+  }
+
+  .studyplan-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .studyplan-header-actions {
+    width: 100%;
+  }
+
+  .studyplan-header-actions button {
+    flex: 1;
+  }
+
+  .studyplan-day-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .studyplan-side-panel {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .studyplan-planner-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .studyplan-view-tabs {
+    width: 100%;
+  }
+
+  .studyplan-view-tabs button {
+    flex: 1;
+  }
+
+  .studyplan-date-navigation {
+    justify-content: center;
+  }
+
+  .studyplan-add-plan-btn {
+    width: 100%;
+  }
+
+  .studyplan-current-date {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .studyplan-month-view {
+    overflow-x: auto;
+  }
+
+  .studyplan-month-weekdays,
+  .studyplan-month-grid {
+    min-width: 700px;
+  }
+
+  .studyplan-timetable {
+    overflow-x: auto;
+  }
+}
+@media (max-width: 850px) {
+  .studyplan-modal-overlay {
+    left: 0;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .studyplan-page {
+    padding: 16px 12px 30px;
+  }
+
+  .studyplan-title-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 13px;
+  }
+
+  .studyplan-title-area h1 {
+    font-size: 22px;
+  }
+
+  .studyplan-title-area p {
+    font-size: 12px;
+  }
+
+  .studyplan-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+
+  .studyplan-stat-card {
+    min-height: 76px;
+    padding: 12px;
+  }
+
+  .studyplan-stat-icon {
+    width: 37px;
+    height: 37px;
+    min-width: 37px;
+  }
+
+  .studyplan-stat-content strong {
+    font-size: 18px;
+  }
+
+  .studyplan-stat-content span {
+    font-size: 10px;
+  }
+
+  .studyplan-main-tabs {
+    width: 100%;
+  }
+
+  .studyplan-main-tabs button {
+    flex: 1;
+    justify-content: center;
+    font-size: 11px;
+    padding: 0 8px;
+  }
+
+  .studyplan-day-card,
+  .studyplan-week-view,
+  .studyplan-month-view,
+  .studyplan-timetable {
+    padding: 14px;
+  }
+
+  .studyplan-session-card {
+    grid-template-columns: 48px 3px minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .studyplan-session-actions {
+    grid-column: 3;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+
+  .studyplan-session-time strong {
+    font-size: 11px;
+  }
+
+  .studyplan-side-panel {
+    display: flex;
+  }
+
+  .studyplan-week-header,
+  .studyplan-month-header,
+  .studyplan-timetable-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .studyplan-modal-overlay {
+    padding: 10px;
+  }
+
+  .studyplan-modal {
+    max-height: calc(100vh - 20px);
+    border-radius: 14px;
+  }
+
+  .studyplan-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .studyplan-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+  }
+
+  .studyplan-toast {
+    top: 75px;
+    right: 12px;
+    left: 12px;
+    min-width: 0;
+  }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY / REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .studyplan-page *,
+  .studyplan-page *::before,
+  .studyplan-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.studyplan-form input[type="date"],
+.studyplan-form input[type="time"] {
+  color-scheme: light;
+  background: #ffffff;
+  color: #0f172a;
+}
