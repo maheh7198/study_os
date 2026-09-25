@@ -1,0 +1,523 @@
+.leaderboard-page {
+  width: 100%;
+  padding: 28px 30px 42px;
+  color: #0f172a;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 24px;
+}
+
+.leaderboard-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+
+.leaderboard-heading-icon {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25);
+}
+
+.leaderboard-heading-icon svg {
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+.leaderboard-heading h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+}
+
+.leaderboard-heading p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* =========================
+   PERIOD FILTER
+========================= */
+
+.leaderboard-period {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.leaderboard-period button {
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.leaderboard-period button:hover {
+  color: #4f46e5;
+  background: #f5f3ff;
+  transform: translateY(-1px);
+}
+
+.leaderboard-period button.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+}
+
+/* =========================
+   YOUR POSITION
+========================= */
+
+.leaderboard-your-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 108px;
+  margin-bottom: 22px;
+  padding: 20px 22px;
+  border: 1px solid #dfe5f2;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(79, 70, 229, 0.08),
+      rgba(168, 85, 247, 0.05)
+    ),
+    #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.your-rank-icon {
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+}
+
+.your-rank-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.your-rank-content > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.your-rank-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.your-rank-row strong {
+  color: #0f172a;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.your-rank-row small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.your-stats {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding-left: 25px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.your-stats div {
+  min-width: 55px;
+}
+
+.your-stats span {
+  display: block;
+  margin-bottom: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.your-stats strong {
+  color: #334155;
+  font-size: 20px;
+}
+
+/* =========================
+   MAIN LEADERBOARD CARD
+========================= */
+
+.leaderboard-card {
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.leaderboard-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf1f7;
+}
+
+.leaderboard-card-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.leaderboard-card-header p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.leaderboard-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+/* =========================
+   EMPTY STATE
+========================= */
+
+.leaderboard-empty {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  padding: 62px 25px;
+  text-align: center;
+}
+
+.empty-trophy {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  border-radius: 17px;
+  color: #6366f1;
+  background: #eef2ff;
+}
+
+.leaderboard-empty h3 {
+  margin: 0 0 7px;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.leaderboard-empty p {
+  max-width: 470px;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================
+   XP SECTION
+========================= */
+
+.xp-section {
+  margin-top: 4px;
+}
+
+.xp-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 14px;
+}
+
+.xp-heading h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.xp-heading p {
+  margin: 4px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.xp-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  color: #64748b;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================
+   XP GRID
+========================= */
+
+.xp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.xp-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 88px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.03);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.xp-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+.xp-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.xp-card h3 {
+  margin: 0 0 3px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.xp-card p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* =========================
+   XP COLORS
+========================= */
+
+.xp-card.indigo .xp-icon {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+.xp-card.cyan .xp-icon {
+  color: #0891b2;
+  background: #ecfeff;
+}
+
+.xp-card.orange .xp-icon {
+  color: #ea580c;
+  background: #fff7ed;
+}
+
+.xp-card.green .xp-icon {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.xp-card.purple .xp-icon {
+  color: #9333ea;
+  background: #faf5ff;
+}
+
+.xp-card.red .xp-icon {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1100px) {
+  .xp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .leaderboard-page {
+    padding: 22px 20px 35px;
+  }
+
+  .leaderboard-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .leaderboard-period {
+    width: 100%;
+  }
+
+  .leaderboard-period button {
+    flex: 1;
+  }
+
+  .leaderboard-your-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .your-rank-content {
+    min-width: calc(100% - 70px);
+  }
+
+  .your-stats {
+    width: 100%;
+    padding: 15px 0 0;
+    border-top: 1px solid #e2e8f0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .leaderboard-page {
+    padding: 18px 14px 30px;
+  }
+
+  .leaderboard-heading {
+    gap: 12px;
+  }
+
+  .leaderboard-heading-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 13px;
+  }
+
+  .leaderboard-heading h1 {
+    font-size: 22px;
+  }
+
+  .leaderboard-heading p {
+    font-size: 12px;
+  }
+
+  .leaderboard-period {
+    overflow-x: auto;
+  }
+
+  .leaderboard-period button {
+    flex: 0 0 auto;
+    padding: 0 12px;
+  }
+
+  .leaderboard-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .leaderboard-status {
+    align-self: flex-start;
+  }
+
+  .xp-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .xp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .xp-card {
+    min-height: 78px;
+  }
+}

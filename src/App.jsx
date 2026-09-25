@@ -42,6 +42,10 @@ import Goals from "./Goals.jsx";
 import StudyPlan from "./StudyPlan.jsx";
 import Pomodoro from "./Pomodoro.jsx";
 import HabitTracker from "./HabitTracker.jsx";
+import Analytics from "./Analytics.jsx";
+import PlacementHub from "./PlacementHub.jsx";
+import Leaderboard from "./Leaderboard.jsx";
+import AIMentor from "./AIMentor.jsx";
 
 
 import "./App.css";
@@ -580,6 +584,14 @@ function App() {
   <HabitTracker
     setNotifications={setNotifications}
   />
+  ) : activePage === "Analytics" ? (
+  <Analytics />
+) : activePage === "Placement Hub" ? (
+  <PlacementHub />
+  ) : activePage === "Leaderboard" ? (
+  <Leaderboard />
+  ) : activePage === "AI Mentor" ? (
+  <AIMentor navigate={navigate} />
 ) : (
   <ModulePage
     page={activePage}
