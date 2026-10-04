@@ -1,0 +1,264 @@
+:root {
+  --modal-surface: var(--card, #ffffff);
+  --modal-surface-soft: var(--bg-elevated, #f8faff);
+  --modal-border: var(--border, #e4eaf5);
+  --modal-text: var(--text, #0f172a);
+  --modal-muted: var(--muted, #64748b);
+  --modal-scroll-thumb: #cbd5e1;
+  --modal-shadow: var(--shadow-lg, 0 22px 60px rgba(15, 23, 42, 0.16));
+}
+
+.studyos {
+  --modal-surface: var(--card, #ffffff);
+  --modal-surface-soft: var(--bg-elevated, #f8faff);
+  --modal-border: var(--border, #e4eaf5);
+  --modal-text: var(--text, #0f172a);
+  --modal-muted: var(--muted, #64748b);
+  --modal-shadow: var(--shadow-lg, 0 22px 60px rgba(15, 23, 42, 0.16));
+}
+
+:root:has(.studyos.night) {
+  --modal-surface: var(--card);
+  --modal-surface-soft: var(--bg-elevated);
+  --modal-border: var(--border);
+  --modal-text: var(--text);
+  --modal-muted: var(--muted);
+  --modal-scroll-thumb: #475569;
+}
+
+.studyos-modal-backdrop {
+  background: rgba(15, 23, 42, 0.48);
+  overscroll-behavior: contain;
+}
+
+.studyos-modal {
+  box-sizing: border-box;
+  max-height: min(calc(100vh - 48px), calc(100dvh - 48px));
+  border: 1px solid var(--modal-border) !important;
+  border-radius: 20px !important;
+  background: var(--modal-surface) !important;
+  color: var(--modal-text);
+  box-shadow: var(--modal-shadow) !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--modal-scroll-thumb) transparent;
+}
+
+.studyos-modal--structured {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+.studyos-modal--scroll {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.studyos-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-color: var(--modal-border) !important;
+  background: var(--modal-surface) !important;
+  color: var(--modal-text);
+}
+
+.studyos-modal :is(.modal-heading, .subject-modal-header) {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-color: var(--modal-border) !important;
+  background: var(--modal-surface) !important;
+}
+
+.studyos-modal :is(.modal-heading, .subject-modal-header) :is(h1, h2, h3, strong) {
+  color: var(--modal-text) !important;
+  font-size: 1rem !important;
+  line-height: 1.3;
+  font-weight: 750 !important;
+}
+
+.studyos-modal-header :is(h1, h2, h3, strong) {
+  color: var(--modal-text) !important;
+  font-size: 1rem !important;
+  line-height: 1.3;
+  font-weight: 750 !important;
+}
+
+.studyos-modal-header :is(p, small) {
+  color: var(--modal-muted) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45;
+}
+
+.studyos-modal :is(.modal-heading, .subject-modal-header) :is(p, small) {
+  color: var(--modal-muted) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45;
+}
+
+.studyos-modal-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--modal-scroll-thumb) transparent;
+}
+
+.studyos-modal-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  border-color: var(--modal-border) !important;
+  background: var(--modal-surface) !important;
+}
+
+.studyos-modal :is(.ui-modal-close, .modal-close, .task-modal-close, .goal-modal-close, .habit-modal-close, .notes-close-btn, .ai-modal-header > button, .ai-camera-header > button, .studyplan-modal-header > button, .task-drawer-header > button) {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--modal-border) !important;
+  border-radius: 10px !important;
+  background: var(--modal-surface-soft) !important;
+  color: var(--modal-muted) !important;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.studyos-modal :is(.ui-modal-close, .modal-close, .task-modal-close, .goal-modal-close, .habit-modal-close, .notes-close-btn, .ai-modal-header > button, .ai-camera-header > button, .studyplan-modal-header > button, .task-drawer-header > button):hover {
+  border-color: var(--modal-border) !important;
+  background: color-mix(in srgb, var(--modal-border) 55%, var(--modal-surface)) !important;
+  color: var(--modal-text) !important;
+}
+
+.studyos-modal :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]), select, textarea) {
+  box-sizing: border-box;
+  max-width: 100%;
+  border: 1px solid var(--modal-border) !important;
+  border-radius: 10px !important;
+  background-color: var(--modal-surface-soft) !important;
+  color: var(--modal-text) !important;
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.studyos-modal :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]), select) {
+  height: 42px !important;
+  min-height: 42px;
+  padding: 0 12px !important;
+}
+
+.studyos-modal textarea {
+  min-height: 96px;
+  padding: 10px 12px !important;
+}
+
+.studyos-modal :is(input, select, textarea)::placeholder {
+  color: var(--modal-muted) !important;
+  opacity: 0.78;
+}
+
+.studyos-modal :is(input, select, textarea):focus-visible {
+  border-color: var(--primary, #4f46e5) !important;
+  outline: 3px solid color-mix(in srgb, var(--primary, #4f46e5) 20%, transparent);
+  outline-offset: 1px;
+}
+
+.studyos-modal :is(label, .goal-form-group label, .habit-form-group label, .studyplan-form-group label, .task-form label, .notes-form-grid label, .notes-editor-field > span) {
+  color: var(--modal-muted);
+}
+
+.studyos-modal-footer button,
+.studyos-modal :is(button[class*="primary"], button[class*="submit"], button[class*="confirm"], button[class*="delete"], button.ai-camera-capture) {
+  min-height: 38px;
+  height: auto;
+  padding: 0.55rem 0.85rem;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.studyos-modal-footer button:not([class*="primary"]):not([class*="submit"]):not([class*="danger"]):not([class*="delete"]):not([class*="confirm"]):not(.ai-camera-capture) {
+  border-color: var(--modal-border);
+  background: var(--modal-surface-soft);
+  color: var(--modal-muted);
+}
+
+.studyos-modal :is(button[class*="primary"], button[class*="submit"]) {
+  background: linear-gradient(135deg, var(--primary, #4f46e5), color-mix(in srgb, var(--primary, #4f46e5) 82%, #a855f7));
+  color: #fff;
+}
+
+.studyos-modal :is(button[class*="danger"], button[class*="delete"], button[class*="confirm"]) {
+  color: #fff;
+}
+
+.studyos-modal :is(.task-view-section, .task-view-info > div, .habit-view-description, .habit-view-stats > div, .habit-view-details > div, .modal-ai-hint, .ai-modal-security) {
+  border-color: var(--modal-border);
+  background-color: var(--modal-surface-soft);
+  color: var(--modal-muted);
+}
+
+body:has(.studyos.night) .studyos-modal {
+  border-color: var(--modal-border) !important;
+  background: var(--modal-surface) !important;
+  color: var(--modal-text);
+  color-scheme: dark;
+}
+
+body:has(.studyos.night) .studyos-modal :is(h1, h2, h3, h4, strong, b) {
+  color: var(--modal-text) !important;
+}
+
+body:has(.studyos.night) .studyos-modal :is(p, small, label, span) {
+  color: var(--modal-muted) !important;
+}
+
+body:has(.studyos.night) .studyos-modal :is(input, select, textarea) {
+  border-color: var(--modal-border) !important;
+  background-color: var(--modal-surface-soft) !important;
+  color: var(--modal-text) !important;
+}
+
+body:has(.studyos.night) .studyos-modal :is(.studyos-modal-header, .studyos-modal-body, .studyos-modal-footer) {
+  border-color: var(--modal-border) !important;
+  background-color: var(--modal-surface) !important;
+}
+
+@media (max-width: 768px) {
+  .studyos-modal-backdrop {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .studyos-modal {
+    max-width: 100%;
+    max-height: min(calc(100vh - 24px), calc(100dvh - 24px));
+    border-radius: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studyos-modal,
+  .studyos-modal :is(.ui-modal-close, .modal-close, .task-modal-close, .goal-modal-close, .habit-modal-close, .notes-close-btn, .ai-modal-header > button, .ai-camera-header > button, .studyplan-modal-header > button, .task-drawer-header > button) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition: none !important;
+  }
+}

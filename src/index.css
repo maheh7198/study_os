@@ -1,0 +1,136 @@
+:root {
+  --sidebar: #263b80;
+  --sidebar-deep: #203675;
+  --sidebar-light: #304a98;
+  --primary: #4f46e5;
+  --primary-strong: #4338ca;
+  --active: #5b5fef;
+  --purple: #7c3aed;
+  --cyan: #06b6d4;
+  --bg: #f3f7ff;
+  --bg-elevated: #f8faff;
+  --card: #ffffff;
+  --card-alt: #eef4ff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --soft-text: #94a3b8;
+  --border: #e4eaf5;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --shadow-sm: 0 4px 18px rgba(15, 23, 42, 0.055);
+  --shadow: 0 10px 32px rgba(30, 41, 59, 0.08);
+  --shadow-lg: 0 22px 60px rgba(15, 23, 42, 0.16);
+  --radius: 18px;
+  --sidebar-width: 255px;
+  --header-height: 76px;
+  --transition: 180ms ease;
+  --font-sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root:has(.studyos.night) {
+  color-scheme: dark;
+  --sidebar: #080b12;
+  --sidebar-deep: #050911;
+  --sidebar-light: #111722;
+  --primary: #7c8cff;
+  --active: #8d95ff;
+  --purple: #9b6cff;
+  --cyan: #3bcff2;
+  --bg: #06080d;
+  --bg-elevated: #0b1017;
+  --card: #0d1119;
+  --card-alt: #111722;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --soft-text: #64748b;
+  --border: #263142;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --shadow-sm: 0 4px 16px rgba(2, 6, 23, 0.22);
+  --shadow: 0 12px 28px rgba(2, 6, 23, 0.38);
+  --shadow-lg: 0 28px 70px rgba(2, 6, 23, 0.55);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  transition: background var(--transition), color var(--transition);
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(79, 70, 229, 0.18);
+  outline-offset: 2px;
+}
+
+img, svg {
+  display: block;
+}
+
+.studyos {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  transition: background var(--transition), color var(--transition);
+}
+
+.studyos.night {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.studyos.night .header,
+.studyos.night .sidebar,
+.studyos.night .page,
+.studyos.night .modal,
+.studyos.night .panel,
+.studyos.night .stat-card,
+.studyos.night .card,
+.studyos.night .ai-popup,
+.studyos.night .ai-input,
+.studyos.night .notification-menu,
+.studyos.night .profile-menu,
+.studyos.night .footer,
+.studyos.night .settings-panel,
+.studyos.night .help-panel {
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  html { font-size: 15px; }
+}
