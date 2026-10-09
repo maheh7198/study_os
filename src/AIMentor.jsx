@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { apiRequest, apiStreamRequest } from "./services/api.js";
 import MarkdownMessage, { MarkdownActions } from "./components/MarkdownMessage.jsx";
 import ErrorBanner from "./components/ErrorBanner.jsx";
@@ -9,11 +9,8 @@ import {
   Plus,
   CheckSquare,
   Target,
-  CalendarDays,
-  Timer,
-  BarChart3,
+  FileText,
   BookOpen,
-  BriefcaseBusiness,
   History,
   Pencil,
   Paperclip,
@@ -22,21 +19,15 @@ import {
   Mic,
   X,
   ChevronDown,
+  Database,
   GraduationCap,
   MessageCircle,
   Brain,
-  ShieldCheck,
-  FileText,
-  Flame,
-  Lightbulb,
-  WandSparkles,
-  Code2,
-  Mic2,
-  Route,
   CircleCheck,
   Trash2,
   Volume2,
   Trophy,
+  StopCircle,
 } from "lucide-react";
 
 import "./AIMentor.css";
@@ -50,18 +41,21 @@ const AI_MODES = [
     label: "Ask",
     description: "General questions and StudyOS help",
     icon: MessageCircle,
+    color: "blue",
   },
   {
     id: "think",
     label: "Think",
-    description: "Break down difficult problems",
+    description: "Deep problem-solving and step-by-step breakdown",
     icon: Brain,
+    color: "purple",
   },
   {
     id: "exam",
     label: "Exam Ready",
-    description: "Prepare for exams and revision",
+    description: "Targeted revision, key formulas, and exam prep",
     icon: GraduationCap,
+    color: "cyan",
   },
 ];
 
@@ -77,7 +71,7 @@ const ACTIONS = [
   {
     id: "CREATE_GOAL",
     label: "Goal",
-    description: "Create or manage goals",
+    description: "Set or track study goals",
     icon: Target,
     color: "purple",
     target: "Goals",
@@ -85,7 +79,7 @@ const ACTIONS = [
   {
     id: "CREATE_NOTE",
     label: "Note",
-    description: "Create or manage notes",
+    description: "Summarize and save notes",
     icon: FileText,
     color: "cyan",
     target: "Notes",
@@ -93,140 +87,90 @@ const ACTIONS = [
   {
     id: "CREATE_SUBJECT",
     label: "Subject",
-    description: "Add or manage subjects",
+    description: "Add or manage course subjects",
     icon: BookOpen,
     color: "green",
     target: "Subjects",
-  },
-  {
-    id: "CREATE_STUDY_PLAN",
-    label: "Study Plan",
-    description: "Create a study schedule",
-    icon: CalendarDays,
-    color: "orange",
-    target: "Study Plan",
-  },
-  {
-    id: "CREATE_HABIT",
-    label: "Habit",
-    description: "Create or manage habits",
-    icon: Flame,
-    color: "pink",
-    target: "Habit Tracker",
-  },
-  {
-    id: "START_FOCUS",
-    label: "Focus",
-    description: "Start a focus session",
-    icon: Timer,
-    color: "red",
-    target: "Pomodoro",
-  },
-  {
-    id: "PLACEMENT_ROADMAP",
-    label: "Placement",
-    description: "Build placement preparation",
-    icon: BriefcaseBusiness,
-    color: "indigo",
-    target: "Placement Hub",
   },
 ];
 
 const QUICK_PROMPTS = [
   {
-    label: "Explain something to me",
-    icon: Lightbulb,
-    text: "Explain this topic to me in a simple way.",
+    icon: Brain,
+    title: "Java OOP Concepts",
+    text: "Explain Java OOP concepts (Encapsulation, Inheritance, Polymorphism, Abstraction) with simple real-world code examples.",
+    badge: "Concepts",
+    theme: "purple",
   },
   {
-    label: "Plan my study day",
-    icon: CalendarDays,
-    text: "Plan my study day based on my current StudyOS progress.",
+    icon: Database,
+    title: "Primary vs Unique Key",
+    text: "What is the difference between a primary key and a unique key in SQL? Provide syntax examples.",
+    badge: "Database",
+    theme: "blue",
   },
   {
-    label: "Prepare me for my exam",
     icon: GraduationCap,
-    text: "Help me prepare for my upcoming exam.",
+    title: "3-Day DBMS Revision",
+    text: "Create a 3-day DBMS revision plan covering normalization, transactions, ACID properties, and indexing.",
+    badge: "Revision Plan",
+    theme: "cyan",
   },
   {
-    label: "Analyze my progress",
-    icon: BarChart3,
-    text: "Analyze my StudyOS progress and tell me what I should improve.",
-  },
-  {
-    label: "Help me with placement",
-    icon: BriefcaseBusiness,
-    text: "Help me create a placement preparation plan.",
-  },
-  {
-    label: "Give me a study strategy",
-    icon: WandSparkles,
-    text: "Give me a practical study strategy for me.",
+    icon: Trophy,
+    title: "Placement Readiness",
+    text: "Analyze placement readiness for a software engineer role and suggest high-yield DSA and CS fundamentals topics.",
+    badge: "Placement",
+    theme: "amber",
   },
 ];
 
 function createId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function loadHistory() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if (!saved) {
-      return [];
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return Array.isArray(parsed) ? parsed.filter((conversation) => conversation && typeof conversation === "object" && typeof conversation.id === "string").map((conversation) => ({ ...conversation, messages: Array.isArray(conversation.messages) ? conversation.messages.filter((message) => message && typeof message === "object") : [] })) : [];
-  } catch {
-    return [];
-  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function createNewConversation() {
   return {
     id: createId(),
-    title: "New StudyOS Chat",
+    title: "New Chat",
+    messages: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    messages: [],
   };
 }
 
-function getChatTitle(messages) {
-  const firstUserMessage = messages.find(
-    (message) => message.role === "user",
-  );
-
-  if (!firstUserMessage) {
-    return "New StudyOS Chat";
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
+}
 
-  const text = firstUserMessage.content.trim();
-
-  return text.length <= 42
-    ? text
-    : `${text.slice(0, 42)}...`;
+function getChatTitle(messages) {
+  const firstUser = messages.find((m) => m.role === "user");
+  if (!firstUser) return "New Chat";
+  const trimmed = firstUser.content.trim();
+  return trimmed.length <= 36 ? trimmed : `${trimmed.slice(0, 36)}...`;
 }
 
 export default function AIMentor() {
   const [conversations, setConversations] = useState(loadHistory);
-  const [activeConversationId, setActiveConversationId] =
-    useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(() => {
+    const saved = loadHistory();
+    return saved.length > 0 ? saved[0].id : null;
+  });
 
   const [mode, setMode] = useState("ask");
   const [modeOpen, setModeOpen] = useState(false);
-
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState([]);
-
   const [actionsOpen, setActionsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-
-  const [selectedAction, setSelectedAction] = useState(null);
-  const [actionRequest, setActionRequest] = useState("");
+  const [searchHistory, setSearchHistory] = useState("");
 
   const [isThinking, setIsThinking] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -236,8 +180,6 @@ export default function AIMentor() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
 
-  const [searchHistory, setSearchHistory] = useState("");
-
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -245,480 +187,339 @@ export default function AIMentor() {
   const recognitionRef = useRef(null);
   const chatBottomRef = useRef(null);
   const requestControllerRef = useRef(null);
+  const historyDropdownRef = useRef(null);
 
-  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) || null;
+  const activeConversation = useMemo(() => {
+    return conversations.find((c) => c.id === activeConversationId) || null;
+  }, [conversations, activeConversationId]);
+
   const messages = activeConversation?.messages || [];
+  const currentMode = AI_MODES.find((item) => item.id === mode) || AI_MODES[0];
+  const hasInput = message.trim().length > 0 || attachments.length > 0;
 
-  const currentMode =
-    AI_MODES.find((item) => item.id === mode) ||
-    AI_MODES[0];
-
-  const hasMessage =
-    message.trim().length > 0 ||
-    attachments.length > 0;
-
+  // Persist conversations
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(conversations),
-    );
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations));
+    } catch {
+      // Ignore quota error
+    }
   }, [conversations]);
 
+  // Auto-scroll on new message
   const latestMessageContent = messages[messages.length - 1]?.content;
   useEffect(() => {
-    if (autoScroll) chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (autoScroll && chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages.length, latestMessageContent, isThinking, autoScroll]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (cameraStream) {
-        cameraStream
-          .getTracks()
-          .forEach((track) => track.stop());
+        cameraStream.getTracks().forEach((track) => track.stop());
       }
-
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      }
+      if (requestControllerRef.current) {
+        requestControllerRef.current.abort();
       }
     };
   }, [cameraStream]);
 
+  // Close history popover on outside click
+  useEffect(() => {
+    if (!historyOpen) return;
+    const handleOutside = (e) => {
+      if (historyDropdownRef.current && !historyDropdownRef.current.contains(e.target)) {
+        setHistoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [historyOpen]);
+
   const createConversation = () => {
-    const conversation =
-      createNewConversation();
-
-    setConversations((previous) => [
-      conversation,
-      ...previous,
-    ]);
-
-    setActiveConversationId(
-      conversation.id,
-    );
-
+    const newConv = createNewConversation();
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConversationId(newConv.id);
     setMessage("");
     setAttachments([]);
-    setActionsOpen(false);
-    setModeOpen(false);
-    setSelectedAction(null);
+    setChatError(null);
     setHistoryOpen(false);
-
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 100);
+    setActionsOpen(false);
+    setTimeout(() => textareaRef.current?.focus(), 80);
   };
 
   const ensureConversation = () => {
     if (activeConversationId) {
-      return activeConversationId;
+      const existing = conversations.find((c) => c.id === activeConversationId);
+      if (existing) return activeConversationId;
     }
-
-    const conversation =
-      createNewConversation();
-
-    setConversations((previous) => [
-      conversation,
-      ...previous,
-    ]);
-
-    setActiveConversationId(
-      conversation.id,
-    );
-
-    return conversation.id;
-  };
-
-  const addMessages = (
-    conversationId,
-    newMessages,
-  ) => {
-    setConversations((previous) =>
-      previous.map((conversation) => {
-        if (
-          conversation.id !==
-          conversationId
-        ) {
-          return conversation;
-        }
-
-        const updatedMessages = [
-          ...conversation.messages,
-          ...newMessages,
-        ];
-
-        return {
-          ...conversation,
-          title:
-            getChatTitle(updatedMessages),
-          messages: updatedMessages,
-          updatedAt:
-            new Date().toISOString(),
-        };
-      }),
-    );
-  };
-
-  const handleModeChange = (nextMode) => {
-    setMode(nextMode);
-    setModeOpen(false);
+    const newConv = createNewConversation();
+    setConversations((prev) => [newConv, ...prev]);
+    setActiveConversationId(newConv.id);
+    return newConv.id;
   };
 
   const handleFiles = (event) => {
-    const files = Array.from(
-      event.target.files || [],
-    );
-
-    if (!files.length) {
-      return;
-    }
-
-    const newAttachments = files.map(
-      (file) => ({
-        id: createId(),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        kind: file.type.startsWith(
-          "image/",
-        )
-          ? "image"
-          : "file",
-        file,
-      }),
-    );
-
-    setAttachments((previous) => [
-      ...previous,
-      ...newAttachments,
-    ]);
-
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    const newAttachments = files.map((file) => ({
+      id: createId(),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      kind: file.type.startsWith("image/") ? "image" : "file",
+      file,
+    }));
+    setAttachments((prev) => [...prev, ...newAttachments]);
     event.target.value = "";
   };
 
   const removeAttachment = (id) => {
-    setAttachments((previous) =>
-      previous.filter(
-        (item) => item.id !== id,
-      ),
-    );
-  };
-
-  const openFilePicker = () => {
-    fileInputRef.current?.click();
-  };
-
-  const openImagePicker = () => {
-    imageInputRef.current?.click();
+    setAttachments((prev) => prev.filter((item) => item.id !== id));
   };
 
   const startCamera = async () => {
     try {
-      if (
-        !navigator.mediaDevices?.getUserMedia
-      ) {
-        console.warn(
-          "Camera is not supported in this browser.",
-        );
+      if (!navigator.mediaDevices?.getUserMedia) {
+        console.warn("Camera not supported in this browser.");
         return;
       }
-
-      const stream =
-        await navigator.mediaDevices.getUserMedia(
-          {
-            video: true,
-            audio: false,
-          },
-        );
-
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       setCameraStream(stream);
       setCameraOpen(true);
-
       setTimeout(() => {
-        if (cameraVideoRef.current) {
-          cameraVideoRef.current.srcObject =
-            stream;
-        }
+        if (cameraVideoRef.current) cameraVideoRef.current.srcObject = stream;
       }, 100);
     } catch {
-      console.warn(
-        "Camera permission was not allowed. Please allow camera access and try again.",
-      );
+      console.warn("Camera access denied or unavailable.");
     }
   };
 
   const closeCamera = () => {
-    if (cameraStream) {
-      cameraStream
-        .getTracks()
-        .forEach((track) => track.stop());
-    }
-
+    if (cameraStream) cameraStream.getTracks().forEach((track) => track.stop());
     setCameraStream(null);
     setCameraOpen(false);
   };
 
   const captureCameraImage = () => {
-    const video =
-      cameraVideoRef.current;
-
-    if (!video) {
-      return;
-    }
-
-    const canvas =
-      document.createElement("canvas");
-
-    canvas.width =
-      video.videoWidth || 1280;
-
-    canvas.height =
-      video.videoHeight || 720;
-
-    const context =
-      canvas.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    context.drawImage(
-      video,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
-
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          return;
-        }
-
-        const file = new File(
-          [blob],
-          `studyos-camera-${Date.now()}.jpg`,
-          {
-            type: "image/jpeg",
-          },
-        );
-
-        setAttachments((previous) => [
-          ...previous,
-          {
-            id: createId(),
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            kind: "image",
-            file,
-          },
-        ]);
-
-        closeCamera();
-      },
-      "image/jpeg",
-    );
+    const video = cameraVideoRef.current;
+    if (!video) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `studyos-capture-${Date.now()}.jpg`, { type: "image/jpeg" });
+      setAttachments((prev) => [
+        ...prev,
+        { id: createId(), name: file.name, type: file.type, size: file.size, kind: "image", file },
+      ]);
+      closeCamera();
+    }, "image/jpeg");
   };
 
   const startVoiceInput = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      console.warn(
-        "Voice input is not supported in this browser. Try Chrome.",
-      );
+      console.warn("Speech recognition not supported in this browser.");
       return;
     }
-
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
       return;
     }
-
-    const recognition =
-      new SpeechRecognition();
-
+    const recognition = new SpeechRecognition();
     recognition.lang = "en-IN";
     recognition.interimResults = true;
     recognition.continuous = false;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event) => {
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (e) => {
       let transcript = "";
-
-      for (
-        let index = event.resultIndex;
-        index < event.results.length;
-        index += 1
-      ) {
-        transcript +=
-          event.results[index][0]
-            .transcript;
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
       }
-
-      setMessage((previous) => {
-        const prefix =
-          previous.trim();
-
-        return prefix
-          ? `${prefix} ${transcript}`
-          : transcript;
-      });
+      setMessage((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
     };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current =
-      recognition;
-
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
     recognition.start();
   };
 
-  const executeAction = async (
-    action,
-    request,
-  ) => {
-    const conversationId =
-      ensureConversation();
-    const actionRequestText = `${action.id} for ${action.target}. User request: ${request}`;
+  const streamAssistant = async (text, convId, assistantId, historyList, continueAnswer, signal) => {
+    const response = await apiStreamRequest("/ai/chat/stream", {
+      signal,
+      body: { message: text, history: historyList.slice(-20), continue: continueAnswer },
+    });
+    if (!response.ok || !response.body) {
+      throw new Error(`AI request failed (${response.status})`);
+    }
 
-    addMessages(
-      conversationId,
-      [
-        {
-          id: createId(),
-          role: "user",
-          content: request,
-          createdAt:
-            new Date().toISOString(),
-        },
-      ],
-    );
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let complete = null;
+    let accumulated = "";
 
-    setSelectedAction(null);
-    setActionRequest("");
-    setActionsOpen(false);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n");
+      buffer = events.pop() || "";
+      for (const event of events) {
+        const line = event.split("\n").find((p) => p.startsWith("data: "));
+        if (!line) continue;
+        let payload;
+        try {
+          payload = JSON.parse(line.slice(6));
+        } catch {
+          continue;
+        }
+        if (payload.type === "error") {
+          throw Object.assign(new Error(payload.message), { status: payload.status, code: payload.code });
+        }
+        if (payload.type === "token") {
+          accumulated += payload.text;
+          setConversations((prev) =>
+            prev.map((c) => {
+              if (c.id === convId) {
+                return {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === assistantId ? { ...m, content: accumulated } : m
+                  ),
+                };
+              }
+              return c;
+            })
+          );
+        }
+        if (payload.type === "done") {
+          complete = payload.response;
+        }
+      }
+    }
 
-    setIsThinking(true);
-    try {
-      const response = await apiRequest("/ai/chat", {
-        method: "POST",
-        body: { message: actionRequestText, mode: "action", history: messages.slice(-20) },
-      });
-      addMessages(conversationId, [{
-        id: createId(),
-        role: "assistant",
-        content: response.message,
-        action: response.action,
-        confirmationId: response.confirmationRequired ? response.confirmationId : undefined,
-        createdAt: new Date().toISOString(),
-      }]);
-      if (response.action && !response.confirmationRequired) {
+    if (complete) {
+      const cleanMessage = (complete.message || accumulated)
+        .replace(/(?:^|\n)```studyos-action[\s\S]*?(?:```|$)/gi, "")
+        .trim();
+
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === convId) {
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === assistantId
+                  ? {
+                      ...m,
+                      content: cleanMessage || accumulated,
+                      truncated: complete.truncated,
+                      confirmationId: complete.confirmationId,
+                      action: complete.confirmationRequired
+                        ? complete.action
+                        : complete.action
+                        ? { target: complete.action }
+                        : undefined,
+                    }
+                  : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
+      if (complete.action && !complete.confirmationRequired) {
         window.dispatchEvent(new Event("studyos-data-changed"));
       }
-    } catch (error) {
-      addMessages(conversationId, [{
-        id: createId(),
-        role: "assistant",
-        content: error.message || "The action request could not be completed.",
-        createdAt: new Date().toISOString(),
-      }]);
-    } finally {
-      setIsThinking(false);
     }
-  };
-
-  const openAction = (action) => {
-    setSelectedAction(action);
-    setActionRequest("");
-    setActionsOpen(false);
-  };
-
-  const submitAction = () => {
-    if (!selectedAction) {
-      return;
-    }
-
-    const request =
-      actionRequest.trim() ||
-      `Create/manage ${selectedAction.label} for me.`;
-
-    executeAction(
-      selectedAction,
-      request,
-    );
   };
 
   const sendMessage = async () => {
     const text = message.trim();
+    if (!text && !attachments.length) return;
+    if (isThinking) return;
 
-    if (
-      !text &&
-      !attachments.length
-    ) {
-      return;
-    }
-
-    const conversationId =
-      ensureConversation();
-
-    const attachmentSummary =
-      attachments.map((item) => ({
-        name: item.name,
-        type: item.type,
-        kind: item.kind,
-        size: item.size,
-      }));
-
-    const userMessage = {
+    const convId = ensureConversation();
+    const userMsg = {
       id: createId(),
       role: "user",
-      content:
-        text ||
-        "Please analyze the attached files.",
-      attachments:
-        attachmentSummary,
+      content: text || "Please analyze the attached files.",
+      attachments: attachments.map((a) => ({ name: a.name, type: a.type, kind: a.kind, size: a.size })),
       mode,
-      createdAt:
-        new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     };
 
-    addMessages(
-      conversationId,
-      [userMessage],
-    );
+    const currentConv = conversations.find((c) => c.id === convId);
+    const priorMessages = currentConv ? currentConv.messages : [];
+    const updatedHistory = [...priorMessages, userMsg];
 
     setMessage("");
     setAttachments([]);
     setChatError(null);
-    const controller = new AbortController();
-    requestControllerRef.current = controller;
     setIsThinking(true);
 
+    const assistantId = createId();
+    const initialAssistantMsg = {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === convId) {
+          const newMessages = [...c.messages, userMsg, initialAssistantMsg];
+          return {
+            ...c,
+            title: c.title === "New Chat" ? getChatTitle(newMessages) : c.title,
+            messages: newMessages,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return c;
+      })
+    );
+
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+
     try {
-      await sendStreamingMessage(userMessage.content, conversationId, [...messages, userMessage], false, controller.signal);
-    } catch (error) {
+      await streamAssistant(userMsg.content, convId, assistantId, updatedHistory, false, controller.signal);
+    } catch (err) {
       if (!controller.signal.aborted) {
-        setChatError(error);
-        addMessages(conversationId, [{
-        id: createId(),
-        role: "assistant",
-        content: error.message || "The AI request could not be completed.",
-        createdAt: new Date().toISOString(),
-        }]);
+        setChatError(err);
+        setConversations((prev) =>
+          prev.map((c) => {
+            if (c.id === convId) {
+              return {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === assistantId
+                    ? {
+                        ...m,
+                        content: m.content || err.message || "The AI request could not be completed.",
+                        isError: true,
+                      }
+                    : m
+                ),
+              };
+            }
+            return c;
+          })
+        );
       }
     } finally {
       requestControllerRef.current = null;
@@ -726,53 +527,43 @@ export default function AIMentor() {
     }
   };
 
-  const retryMessage = async (sourceMessage, continueAnswer = false) => {
+  const retryMessage = async (assistantMessage, continueAnswer = false) => {
     if (isThinking) return;
-    const currentMessages = conversations.find((conversation) => conversation.id === activeConversationId)?.messages || [];
-    const prior = currentMessages.slice(0, currentMessages.findIndex((item) => item.id === sourceMessage.id));
-    const latestUser = [...prior].reverse().find((item) => item.role === "user");
+    const currentConv = conversations.find((c) => c.id === activeConversationId);
+    if (!currentConv) return;
+    const msgIndex = currentConv.messages.findIndex((m) => m.id === assistantMessage.id);
+    if (msgIndex < 0) return;
+
+    const priorMessages = currentConv.messages.slice(0, msgIndex);
+    const latestUser = [...priorMessages].reverse().find((m) => m.role === "user");
     if (!latestUser) return;
+
     setChatError(null);
     setIsThinking(true);
     const controller = new AbortController();
     requestControllerRef.current = controller;
-    try {
-      await sendStreamingMessage(latestUser.content, activeConversationId, prior, continueAnswer, controller.signal);
-    } catch (error) { if (!controller.signal.aborted) setChatError(error); }
-    finally { requestControllerRef.current = null; setIsThinking(false); }
-  };
 
-  const sendStreamingMessage = async (text, conversationId, history, continueAnswer = false, signal) => {
-    const response = await apiStreamRequest("/ai/chat/stream", {
-      signal,
-      body: { message: text, history: history.slice(-20), continue: continueAnswer },
-    });
-    if (!response.ok || !response.body) throw new Error(`AI request failed (${response.status}).`);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let complete = null;
-    let assistantId = createId();
-    addMessages(conversationId, [{ id: assistantId, role: "assistant", content: "", createdAt: new Date().toISOString() }]);
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const events = buffer.split("\n\n"); buffer = events.pop() || "";
-      for (const event of events) {
-        const line = event.split("\n").find((part) => part.startsWith("data: "));
-        if (!line) continue;
-        const payload = JSON.parse(line.slice(6));
-        if (payload.type === "error") throw Object.assign(new Error(payload.message), { status: payload.status, code: payload.code });
-        if (payload.type === "notice") setChatError({ title: "Local AI fallback", message: payload.message, retryable: false });
-        if (payload.type === "token") setConversations((previous) => previous.map((conversation) => conversation.id === conversationId ? { ...conversation, messages: conversation.messages.map((item) => item.id === assistantId ? { ...item, content: item.content + payload.text } : item) } : conversation));
-        if (payload.type === "done") complete = payload.response;
-      }
+    try {
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id === activeConversationId) {
+            return {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === assistantMessage.id ? { ...m, content: continueAnswer ? m.content : "", isError: false } : m
+              ),
+            };
+          }
+          return c;
+        })
+      );
+      await streamAssistant(latestUser.content, activeConversationId, assistantMessage.id, priorMessages, continueAnswer, controller.signal);
+    } catch (err) {
+      if (!controller.signal.aborted) setChatError(err);
+    } finally {
+      requestControllerRef.current = null;
+      setIsThinking(false);
     }
-    if (!complete) throw new Error("The AI stream ended before an answer was complete.");
-    setConversations((previous) => previous.map((conversation) => conversation.id === conversationId ? { ...conversation, messages: conversation.messages.map((item) => item.id === assistantId ? { ...item, truncated: complete.truncated, confirmationId: complete.confirmationId, action: complete.confirmationRequired ? complete.action : undefined } : item) } : conversation));
-    if (complete.action && !complete.confirmationRequired) window.dispatchEvent(new Event("studyos-data-changed"));
-    return complete;
   };
 
   const confirmAIAction = async (confirmationId, conversationId, messageId) => {
@@ -782,639 +573,408 @@ export default function AIMentor() {
         method: "POST",
         body: { message: "Confirm the requested action.", confirmationId, confirm: true },
       });
-      setConversations((previous) => previous.map((conversation) => conversation.id !== conversationId
-        ? conversation
-        : {
-          ...conversation,
-          messages: conversation.messages.map((item) => item.id === messageId
-            ? { ...item, confirmationId: undefined, confirmationComplete: true }
-            : item).concat({
-            id: createId(),
-            role: "assistant",
-            content: response.message,
-            createdAt: new Date().toISOString(),
-          }),
-        }));
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== conversationId) return c;
+          return {
+            ...c,
+            messages: c.messages
+              .map((m) => (m.id === messageId ? { ...m, confirmationId: undefined, confirmationComplete: true } : m))
+              .concat({
+                id: createId(),
+                role: "assistant",
+                content: response.message,
+                createdAt: new Date().toISOString(),
+              }),
+          };
+        })
+      );
       window.dispatchEvent(new Event("studyos-data-changed"));
-    } catch (error) {
-      addMessages(conversationId, [{
-        id: createId(),
-        role: "assistant",
-        content: error.message || "The action could not be completed.",
-        createdAt: new Date().toISOString(),
-      }]);
+    } catch (err) {
+      setChatError(err);
     } finally {
       setIsThinking(false);
     }
   };
 
-  const handleTextareaKeyDown = (
-    event,
-  ) => {
-    if (
-      event.key === "Enter" &&
-      !event.shiftKey
-    ) {
-      event.preventDefault();
+  const handleComposerKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       sendMessage();
     }
   };
 
-  const handleComposerChange = (event) => {
-    const element = event.target;
-    setMessage(element.value);
-    element.style.height = "auto";
-    element.style.height = `${Math.min(element.scrollHeight, 192)}px`;
+  const handleComposerChange = (e) => {
+    setMessage(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
   };
 
-  const handleQuickPrompt = (
-    prompt,
-  ) => {
-    setMessage(prompt.text);
-
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 50);
-  };
-
-  const handleExamPrompt = (
-    text,
-  ) => {
-    setMode("exam");
+  const handlePromptClick = (text) => {
     setMessage(text);
-
     setTimeout(() => {
-      textareaRef.current?.focus();
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 180)}px`;
+      }
     }, 50);
   };
 
-  const handlePlacementPrompt = (
-    text,
-  ) => {
-    setMode("ask");
-    setMessage(text);
-
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 50);
+  const executeActionShortcut = (action) => {
+    setActionsOpen(false);
+    handlePromptClick(`Please help me create a ${action.label} in StudyOS.`);
   };
 
-  const deleteConversation = (id) => {
-    setConversations((previous) =>
-      previous.filter(
-        (conversation) =>
-          conversation.id !== id,
-      ),
-    );
-
-    if (
-      activeConversationId === id
-    ) {
-      setActiveConversationId(null);
+  const deleteConversation = (id, e) => {
+    e.stopPropagation();
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeConversationId === id) {
+      const remaining = conversations.filter((c) => c.id !== id);
+      setActiveConversationId(remaining.length > 0 ? remaining[0].id : null);
     }
   };
 
-  const filteredHistory =
-    conversations
-      .filter((conversation) =>
-        conversation.title
-          .toLowerCase()
-          .includes(
-            searchHistory.toLowerCase(),
-          ),
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt) -
-          new Date(a.updatedAt),
-      );
-
-  const openConversation = (id) => {
-    setActiveConversationId(id);
-    setHistoryOpen(false);
-  };
+  const filteredHistory = useMemo(() => {
+    return conversations
+      .filter((c) => c.title.toLowerCase().includes(searchHistory.toLowerCase()))
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  }, [conversations, searchHistory]);
 
   const ModeIcon = currentMode.icon;
 
   return (
-    <div className="ai-mentor-page">
-      {/* =====================================================
-          HEADER
-          ===================================================== */}
-
-      <header className="ai-mentor-header">
-        <div className="ai-mentor-heading">
-          <div className="ai-mentor-heading-icon">
-            <Bot
-              size={28}
-              strokeWidth={2}
-            />
-
-            <span />
+    <div className="ai-page">
+      {/* =========================================================
+          PAGE HEADER (Tasks / Pomodoro style alignment)
+          ========================================================= */}
+      <header className="ai-page-header">
+        <div className="ai-page-heading">
+          <div className="ai-page-heading-icon">
+            <Bot size={28} />
           </div>
-
-          <div className="ai-mentor-heading-content">
-            <div className="ai-mentor-title-row">
+          <div className="ai-page-heading-text">
+            <div className="ai-title-row">
               <h1>AI Mentor</h1>
-
-              <span className="ai-workspace-badge">
-                <i />
-                AI Workspace
+              <span className="ai-pro-badge">
+                <Sparkles size={11} />
+                Intelligent Tutor
               </span>
             </div>
-
-            <p>
-              Your intelligent StudyOS
-              assistant for learning,
-              planning, exams,
-              productivity and
-              placement.
-            </p>
+            <p>Your intelligent study companion for concepts, revision, problem solving, and placements.</p>
           </div>
         </div>
 
-        <div className="ai-header-actions">
-          <button
-            type="button"
-            className="ai-history-button"
-            onClick={() =>
-              setHistoryOpen(
-                (previous) =>
-                  !previous,
-              )
-            }
-          >
-            <History size={14} />
-            History
-          </button>
-
-          <button
-            type="button"
-            className="ai-new-chat-button"
-            onClick={
-              createConversation
-            }
-          >
-            <Pencil size={13} />
-            New chat
-          </button>
-        </div>
-
-        {/* Compact history popup */}
-
-        {historyOpen && (
-          <div className="ai-history-popover">
-            <div className="ai-history-popover-header">
-              <div>
-                <strong>
-                  Chat history
-                </strong>
-
-                <span>
-                  Your StudyOS AI
-                  conversations
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setHistoryOpen(false)
-                }
-              >
-                <X size={14} />
-              </button>
-            </div>
-
-            <div className="ai-history-search">
-              <MessageCircle
-                size={13}
-              />
-
-              <input
-                value={searchHistory}
-                onChange={(event) =>
-                  setSearchHistory(
-                    event.target.value,
-                  )
-                }
-                placeholder="Search conversations..."
-              />
-            </div>
-
+        <div className="ai-page-header-actions">
+          <div className="ai-history-wrapper" ref={historyDropdownRef}>
             <button
               type="button"
-              className="ai-history-new"
-              onClick={
-                createConversation
-              }
+              className={`ai-btn-secondary ${historyOpen ? "active" : ""}`}
+              onClick={() => setHistoryOpen(!historyOpen)}
+              title="View conversation history"
             >
-              <Plus size={13} />
-              New chat
+              <History size={15} />
+              <span>History</span>
+              {conversations.length > 0 && <span className="ai-count-chip">{conversations.length}</span>}
             </button>
 
-            <div className="ai-history-list">
-              {filteredHistory.length ===
-              0 ? (
-                <div className="ai-history-empty">
-                  <History size={22} />
-
-                  <strong>
-                    No conversations yet
-                  </strong>
-
-                  <span>
-                    Your StudyOS AI
-                    conversations will
-                    appear here.
-                  </span>
+            {historyOpen && (
+              <div className="ai-history-popover">
+                <div className="ai-history-popover-header">
+                  <div>
+                    <strong>Chat History</strong>
+                    <p>Recent StudyOS conversations</p>
+                  </div>
+                  <button type="button" className="ai-close-btn" onClick={() => setHistoryOpen(false)}>
+                    <X size={14} />
+                  </button>
                 </div>
-              ) : (
-                filteredHistory.map(
-                  (conversation) => (
-                    <div
-                      className={`ai-history-item ${
-                        conversation.id ===
-                        activeConversationId
-                          ? "active"
-                          : ""
-                      }`}
-                      key={
-                        conversation.id
-                      }
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openConversation(
-                            conversation.id,
-                          )
-                        }
-                      >
-                        <MessageCircle
-                          size={13}
-                        />
 
-                        <span>
-                          <strong>
-                            {
-                              conversation.title
-                            }
-                          </strong>
+                <div className="ai-history-search">
+                  <MessageCircle size={13} />
+                  <input
+                    value={searchHistory}
+                    onChange={(e) => setSearchHistory(e.target.value)}
+                    placeholder="Search conversations..."
+                  />
+                </div>
 
-                          <small>
-                            {new Date(
-                              conversation.updatedAt,
-                            ).toLocaleString()}
-                          </small>
-                        </span>
-                      </button>
+                <button type="button" className="ai-history-new-btn" onClick={createConversation}>
+                  <Plus size={14} />
+                  <span>Start New Chat</span>
+                </button>
 
-                      <button
-                        type="button"
-                        className="ai-history-delete"
-                        onClick={() =>
-                          deleteConversation(
-                            conversation.id,
-                          )
-                        }
-                      >
-                        <Trash2 size={11} />
-                      </button>
+                <div className="ai-history-list">
+                  {filteredHistory.length === 0 ? (
+                    <div className="ai-history-empty">
+                      <History size={20} />
+                      <strong>No conversations found</strong>
+                      <span>Start a chat or ask a question to see history.</span>
                     </div>
-                  ),
-                )
-              )}
-            </div>
+                  ) : (
+                    filteredHistory.map((c) => (
+                      <div
+                        key={c.id}
+                        className={`ai-history-item ${c.id === activeConversationId ? "selected" : ""}`}
+                        onClick={() => {
+                          setActiveConversationId(c.id);
+                          setHistoryOpen(false);
+                        }}
+                      >
+                        <MessageCircle size={14} className="ai-history-item-icon" />
+                        <div className="ai-history-item-content">
+                          <strong>{c.title}</strong>
+                          <small>{new Date(c.updatedAt).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</small>
+                        </div>
+                        <button
+                          type="button"
+                          className="ai-history-delete-btn"
+                          title="Delete conversation"
+                          onClick={(e) => deleteConversation(c.id, e)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          <button type="button" className="ai-btn-primary" onClick={createConversation} title="New conversation">
+            <Pencil size={14} />
+            <span>New Chat</span>
+          </button>
+        </div>
       </header>
 
-      {/* =====================================================
-          CHAT
-          ===================================================== */}
-
+      {/* =========================================================
+          MAIN CHAT CONTAINER
+          ========================================================= */}
       <main className="ai-chat-card">
+        {/* Top toolbar */}
         <div className="ai-chat-topbar">
-          <div className="ai-chat-identity">
-            <div className="ai-chat-avatar">
-              <Bot size={18} />
-              <span />
-            </div>
-
-            <div>
-              <strong>
-                StudyOS AI
-              </strong>
-
-              <small>
-                <i />
-                Ready to help
-              </small>
+          <div className="ai-topbar-info">
+            <div className="ai-status-indicator">
+              <span className="ai-status-dot" />
+              <strong>{activeConversation ? activeConversation.title : "New Chat"}</strong>
             </div>
           </div>
 
-          <div className="ai-current-mode">
-            <ModeIcon size={12} />
-            {currentMode.label}
+          {/* Mode Selector */}
+          <div className="ai-mode-pill-wrapper">
+            <button
+              type="button"
+              className="ai-mode-selector-btn"
+              onClick={() => setModeOpen(!modeOpen)}
+              title="Select AI Mentor Mode"
+            >
+              <span className={`ai-mode-icon-accent mode-${currentMode.color || "blue"}`}>
+                <ModeIcon size={14} />
+              </span>
+              <span>{currentMode.label}</span>
+              <ChevronDown size={12} className={modeOpen ? "rotate" : ""} />
+            </button>
+
+            {modeOpen && (
+              <div className="ai-mode-dropdown">
+                {AI_MODES.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`ai-mode-option mode-opt-${item.color || "blue"} ${mode === item.id ? "active" : ""}`}
+                      onClick={() => {
+                        setMode(item.id);
+                        setModeOpen(false);
+                      }}
+                    >
+                      <div className={`ai-mode-option-icon icon-${item.color || "blue"}`}>
+                        <IconComponent size={14} />
+                      </div>
+                      <div className="ai-mode-option-text">
+                        <strong>{item.label}</strong>
+                        <small>{item.description}</small>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="ai-chat-content" onScroll={(event) => {
-          const element = event.currentTarget;
-          setAutoScroll(element.scrollHeight - element.scrollTop - element.clientHeight < 72);
-        }}>
-          {chatError && <ErrorBanner error={chatError} onRetry={() => retryMessage(messages[messages.length - 1], false)} />}
-          {messages.length === 0 ? (
-            <div className="ai-welcome">
-              <div className="ai-welcome-icon">
-                <Bot size={31} />
+        {/* Scrollable Conversation Area */}
+        <div
+          className="ai-chat-scroll-area"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setAutoScroll(el.scrollHeight - el.scrollTop - el.clientHeight < 80);
+          }}
+        >
+          {chatError && (
+            <div className="ai-error-banner-wrap">
+              <ErrorBanner error={chatError} onRetry={() => retryMessage(messages[messages.length - 1], false)} />
+            </div>
+          )}
 
-                <Sparkles
-                  size={13}
-                  className="ai-welcome-sparkle"
-                />
+          {/* EMPTY STATE */}
+          {messages.length === 0 ? (
+            <div className="ai-welcome-container">
+              <div className="ai-welcome-hero">
+                <div className="ai-welcome-avatar">
+                  <Bot size={34} />
+                </div>
+                <h2>How can StudyOS AI assist you today?</h2>
+                <p>
+                  Ask questions, break down complex concepts, prepare for exams, or request actions to manage your
+                  workspace.
+                </p>
               </div>
 
-              <h2>
-                How can I help you today?
-              </h2>
+              {/* Quick Prompts Grid */}
+              <div className="ai-quick-grid">
+                {QUICK_PROMPTS.map((prompt, idx) => {
+                  const PromptIcon = prompt.icon;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`ai-quick-card theme-${prompt.theme}`}
+                      onClick={() => handlePromptClick(prompt.text)}
+                    >
+                      <div className="ai-quick-card-header">
+                        <div className={`ai-quick-card-icon icon-${prompt.theme}`}>
+                          <PromptIcon size={16} />
+                        </div>
+                        <span className={`ai-quick-card-badge badge-${prompt.theme}`}>{prompt.badge}</span>
+                      </div>
+                      <strong>{prompt.title}</strong>
+                      <p>{prompt.text}</p>
+                    </button>
+                  );
+                })}
+              </div>
 
-              <p>
-                Ask general or personal
-                questions, learn a
-                concept, prepare for an
-                exam, plan your day,
-                analyze your progress
-                or ask AI to manage
-                your StudyOS workspace.
-              </p>
-
-              {/* Quick prompts */}
-
-              <div className="ai-prompt-grid">
-                {QUICK_PROMPTS.map(
-                  (prompt) => {
-                    const PromptIcon =
-                      prompt.icon;
-
+              {/* StudyOS Quick Action Pills */}
+              <div className="ai-action-pills-section">
+                <span className="ai-action-pills-label">Quick Workspace Actions:</span>
+                <div className="ai-action-pills">
+                  {ACTIONS.map((action) => {
+                    const ActionIcon = action.icon;
                     return (
                       <button
+                        key={action.id}
                         type="button"
-                        key={
-                          prompt.label
-                        }
-                        onClick={() =>
-                          handleQuickPrompt(
-                            prompt,
-                          )
-                        }
+                        className={`ai-action-pill pill-${action.color}`}
+                        onClick={() => executeActionShortcut(action)}
                       >
-                        <PromptIcon
-                          size={14}
-                        />
-
-                        <span>
-                          {
-                            prompt.label
-                          }
+                        <span className={`ai-action-pill-icon icon-${action.color}`}>
+                          <ActionIcon size={13} />
                         </span>
+                        <span>Create {action.label}</span>
                       </button>
                     );
-                  },
-                )}
+                  })}
+                </div>
               </div>
-
-              {/* Exam preparation */}
-
-              <section className="ai-special-card exam">
-                <div className="ai-special-icon">
-                  <GraduationCap
-                    size={19}
-                  />
-                </div>
-
-                <div className="ai-special-content">
-                  <div className="ai-special-title">
-                    <strong>
-                      Exam Ready
-                    </strong>
-
-                    <span>
-                      Study smarter
-                    </span>
-                  </div>
-
-                  <p>
-                    Tell me your subject,
-                    exam date and available
-                    study time. I can
-                    prepare a structured
-                    revision strategy.
-                  </p>
-
-                  <div className="ai-special-actions">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleExamPrompt(
-                          "I have an exam in 5 days. Make a preparation plan for me.",
-                        )
-                      }
-                    >
-                      Exam in 5 days
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleExamPrompt(
-                          "Prepare important topics and revision strategy for my exam.",
-                        )
-                      }
-                    >
-                      Important topics
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleExamPrompt(
-                          "Explain this topic in an exam-ready way.",
-                        )
-                      }
-                    >
-                      Exam explanation
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-              {/* Placement preparation */}
-
-              <section className="ai-special-card placement">
-                <div className="ai-special-icon">
-                  <BriefcaseBusiness
-                    size={19}
-                  />
-                </div>
-
-                <div className="ai-special-content">
-                  <div className="ai-special-title">
-                    <strong>
-                      Placement Preparation
-                    </strong>
-
-                    <span>
-                      Build your career
-                    </span>
-                  </div>
-
-                  <p>
-                    Prepare DSA, Java,
-                    Core CS, Aptitude,
-                    interviews and resume
-                    readiness with a
-                    personalized placement
-                    strategy.
-                  </p>
-
-                  <div className="ai-placement-mini-grid">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePlacementPrompt(
-                          "Create my placement preparation roadmap based on my current progress.",
-                        )
-                      }
-                    >
-                      <Route size={12} />
-                      Roadmap
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePlacementPrompt(
-                          "Give me a DSA preparation plan for placements.",
-                        )
-                      }
-                    >
-                      <Code2 size={12} />
-                      DSA
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePlacementPrompt(
-                          "Prepare me for a technical placement interview.",
-                        )
-                      }
-                    >
-                      <Mic2 size={12} />
-                      Interview
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handlePlacementPrompt(
-                          "Analyze my placement readiness and find my weak areas.",
-                        )
-                      }
-                    >
-                      <Trophy size={12} />
-                      Readiness
-                    </button>
-                  </div>
-                </div>
-              </section>
             </div>
           ) : (
-            <div className="ai-conversation">
+            /* CONVERSATION MESSAGES */
+            <div className="ai-messages-list">
               {messages.map((item) => (
                 <div
                   key={item.id}
-                  className={`ai-message ${
-                    item.role === "user"
-                      ? "user"
-                      : "assistant"
-                  }`}
+                  className={`ai-message-row ${item.role === "user" ? "user-row" : "assistant-row"}`}
                 >
-                  {item.role === "assistant" && <div className="ai-message-avatar"><Bot size={15} /></div>}
+                  {item.role === "assistant" && (
+                    <div className="ai-avatar-circle">
+                      <Bot size={16} />
+                    </div>
+                  )}
 
-                  <div className="ai-message-body">
-                    {item.role === "assistant" && <div className="ai-message-name">StudyOS AI</div>}
+                  <div className={`ai-message-bubble ${item.role === "user" ? "user-bubble" : "assistant-bubble"}`}>
+                    {item.role === "assistant" && (
+                      <div className="ai-bubble-header">
+                        <span className="ai-assistant-name">StudyOS AI</span>
+                        <span className="ai-timestamp">
+                          {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    )}
 
-                    <div className="ai-message-bubble"><MarkdownMessage text={item.content} /></div>
-                    {item.role === "assistant" && <MarkdownActions text={item.content} onRegenerate={() => retryMessage(item)} onContinue={item.truncated ? () => retryMessage(item, true) : undefined} />}
+                    {/* Content */}
+                    <div className="ai-bubble-content">
+                      {item.role === "user" ? (
+                        <p className="ai-user-text">{item.content}</p>
+                      ) : (
+                        <MarkdownMessage text={item.content} />
+                      )}
+                    </div>
 
+                    {/* Attachments if any */}
+                    {item.attachments?.length > 0 && (
+                      <div className="ai-msg-attachments">
+                        {item.attachments.map((file, fIdx) => (
+                          <span key={fIdx} className="ai-msg-file-tag">
+                            {file.kind === "image" ? <ImageIcon size={11} /> : <FileText size={11} />}
+                            {file.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Action Execution Feedback */}
+                    {item.action && (
+                      <div className="ai-action-badge">
+                        <CircleCheck size={12} />
+                        <span>Workspace action applied: {item.action.target || item.action}</span>
+                      </div>
+                    )}
+
+                    {/* Action Confirmation Button */}
                     {item.confirmationId && (
                       <button
-                        className="ai-message-confirm"
                         type="button"
+                        className="ai-action-confirm-btn"
                         disabled={isThinking}
                         onClick={() => confirmAIAction(item.confirmationId, activeConversationId, item.id)}
                       >
-                        Confirm {item.action?.replace(/^delete/, "delete ").replace(/^./, (letter) => letter.toUpperCase())}
+                        Confirm {String(item.action || "action").replace(/^delete/, "delete ")}
                       </button>
                     )}
 
-                    {item.attachments
-                      ?.length > 0 && (
-                      <div className="ai-message-files">
-                        {item.attachments.map(
-                          (file) => (
-                            <span
-                              key={`${item.id}-${file.name}`}
-                            >
-                              {file.kind ===
-                              "image" ? (
-                                <ImageIcon
-                                  size={10}
-                                />
-                              ) : (
-                                <FileText
-                                  size={10}
-                                />
-                              )}
-
-                              {file.name}
-                            </span>
-                          ),
-                        )}
-                      </div>
-                    )}
-
-                    {item.action && (
-                      <div className="ai-message-action">
-                        <CircleCheck
-                          size={10}
+                    {/* EXACTLY ONE ACTION TOOLBAR PER ASSISTANT MESSAGE */}
+                    {item.role === "assistant" && !item.isError && (
+                      <div className="ai-message-actions-bar">
+                        <MarkdownActions
+                          text={item.content}
+                          onRegenerate={() => retryMessage(item, false)}
+                          onContinue={item.truncated ? () => retryMessage(item, true) : undefined}
                         />
-                        {item.action.target}
                       </div>
                     )}
-                    {item.role === "assistant" && <MarkdownActions text={item.content} onRegenerate={() => retryMessage(item)} onContinue={item.truncated ? () => retryMessage(item, true) : undefined} />}
                   </div>
                 </div>
               ))}
 
+              {/* Thinking Indicator */}
               {isThinking && (
-                <div className="ai-message">
-                  <div className="ai-message-avatar">
-                    <Bot size={15} />
+                <div className="ai-message-row assistant-row">
+                  <div className="ai-avatar-circle thinking-avatar">
+                    <Bot size={16} />
                   </div>
-
-                  <div className="ai-message-body">
-                    <div className="ai-message-name">
-                      StudyOS AI
+                  <div className="ai-message-bubble assistant-bubble typing-bubble">
+                    <div className="ai-bubble-header">
+                      <span className="ai-assistant-name">StudyOS AI</span>
                     </div>
-
-                    <div className="ai-message-bubble typing">
-                      <span />
-                      <span />
-                      <span />
+                    <div className="ai-typing-indicator">
+                      <span className="dot" />
+                      <span className="dot" />
+                      <span className="dot" />
+                      <span className="ai-typing-label">Formulating response...</span>
                     </div>
                   </div>
                 </div>
@@ -1425,568 +985,204 @@ export default function AIMentor() {
           )}
         </div>
 
-        {/* =================================================
-            COMPOSER
-            ================================================= */}
+        {/* Scroll To Bottom Button */}
+        {!autoScroll && messages.length > 0 && (
+          <button
+            type="button"
+            className="ai-scroll-bottom"
+            onClick={() => {
+              setAutoScroll(true);
+              chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Scroll to bottom
+          </button>
+        )}
 
-        {!autoScroll && messages.length > 0 && <button type="button" className="ai-scroll-bottom" onClick={() => { setAutoScroll(true); chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }}>Scroll to bottom</button>}
-        <div className="ai-composer-section">
-          {/* Actions popup */}
-
+        {/* =========================================================
+            COMPOSER SECTION
+            ========================================================= */}
+        <div className="ai-composer-wrapper">
+          {/* Actions Popover Menu */}
           {actionsOpen && (
-            <div className="ai-actions-menu">
-              <div className="ai-actions-header">
-                <div>
-                  <strong>
-                    StudyOS Actions
-                  </strong>
-
-                  <span>
-                    Ask AI to create,
-                    update or manage
-                    your workspace
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActionsOpen(false)
-                  }
-                >
+            <div className="ai-actions-popover">
+              <div className="ai-actions-popover-header">
+                <strong>StudyOS Workspace Actions</strong>
+                <button type="button" onClick={() => setActionsOpen(false)}>
                   <X size={14} />
                 </button>
               </div>
-
-              <div className="ai-actions-grid">
-                {ACTIONS.map(
-                  (action) => {
-                    const ActionIcon =
-                      action.icon;
-
-                    return (
-                      <button
-                        type="button"
-                        className="ai-action-item"
-                        key={action.id}
-                        onClick={() =>
-                          openAction(
-                            action,
-                          )
-                        }
-                      >
-                        <div
-                          className={`ai-action-icon ${action.color}`}
-                        >
-                          <ActionIcon
-                            size={14}
-                          />
-                        </div>
-
-                        <span>
-                          <strong>
-                            {
-                              action.label
-                            }
-                          </strong>
-
-                          <small>
-                            {
-                              action.description
-                            }
-                          </small>
-                        </span>
-                      </button>
-                    );
-                  },
-                )}
+              <div className="ai-actions-popover-grid">
+                {ACTIONS.map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      className="ai-action-popover-item"
+                      onClick={() => executeActionShortcut(action)}
+                    >
+                      <div className={`ai-action-icon-box ${action.color}`}>
+                        <ActionIcon size={15} />
+                      </div>
+                      <div className="ai-action-item-info">
+                        <strong>{action.label}</strong>
+                        <small>{action.description}</small>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Attachment chips */}
-
+          {/* Attachment Chips */}
           {attachments.length > 0 && (
-            <div className="ai-attachments">
-              {attachments.map(
-                (attachment) => (
-                  <div
-                    className="ai-file-chip"
-                    key={attachment.id}
-                  >
-                    {attachment.kind ===
-                    "image" ? (
-                      <ImageIcon
-                        size={11}
-                      />
-                    ) : (
-                      <FileText
-                        size={11}
-                      />
-                    )}
-
-                    <span>
-                      {
-                        attachment.name
-                      }
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeAttachment(
-                          attachment.id,
-                        )
-                      }
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ),
-              )}
+            <div className="ai-composer-attachments">
+              {attachments.map((att) => (
+                <div key={att.id} className="ai-attachment-chip">
+                  {att.kind === "image" ? <ImageIcon size={12} /> : <FileText size={12} />}
+                  <span>{att.name}</span>
+                  <button type="button" onClick={() => removeAttachment(att.id)}>
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Main input */}
-
-          <div className="ai-composer">
+          {/* Main Input Box */}
+          <div className={`ai-composer-box ${hasInput ? "has-input" : ""}`}>
             <button
               type="button"
-              className="ai-plus-button"
-              onClick={() =>
-                setActionsOpen(
-                  (previous) =>
-                    !previous,
-                )
-              }
-              title="StudyOS Actions"
+              className={`ai-composer-action-btn ${actionsOpen ? "active" : ""}`}
+              onClick={() => setActionsOpen(!actionsOpen)}
+              title="Add StudyOS Action"
             >
-              <Plus size={19} />
+              <Plus size={18} />
             </button>
 
             <textarea
               ref={textareaRef}
               value={message}
               onChange={handleComposerChange}
-              onKeyDown={
-                handleTextareaKeyDown
-              }
-              placeholder={
-                mode === "exam"
-                  ? "Message StudyOS AI..."
-                  : "Message StudyOS AI..."
-              }
+              onKeyDown={handleComposerKeyDown}
+              placeholder="Message StudyOS AI... (Shift + Enter for new line)"
               rows={1}
             />
 
-            <div className="ai-input-tools">
+            <div className="ai-composer-tools">
+              {/* File Inputs */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleFiles}
+              />
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleFiles}
+              />
+
               <button
                 type="button"
-                onClick={
-                  openFilePicker
-                }
-                title="Attach file or PDF"
+                className="ai-tool-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach file"
               >
-                <Paperclip size={17} />
+                <Paperclip size={16} />
               </button>
 
               <button
                 type="button"
-                onClick={
-                  openImagePicker
-                }
-                title="Upload image"
+                className="ai-tool-btn"
+                onClick={() => imageInputRef.current?.click()}
+                title="Attach image"
               >
-                <ImageIcon size={17} />
+                <ImageIcon size={16} />
               </button>
 
               <button
                 type="button"
-                onClick={
-                  startCamera
-                }
-                title="Camera"
+                className="ai-tool-btn"
+                onClick={startCamera}
+                title="Camera capture"
               >
-                <Camera size={17} />
+                <Camera size={16} />
               </button>
 
               <button
                 type="button"
-                className={
-                  isListening
-                    ? "recording"
-                    : ""
-                }
-                onClick={
-                  startVoiceInput
-                }
+                className={`ai-tool-btn ${isListening ? "active-mic" : ""}`}
+                onClick={startVoiceInput}
                 title="Voice input"
               >
-                {isListening ? (
-                  <Volume2
-                    size={17}
-                  />
-                ) : (
-                  <Mic size={17} />
-                )}
+                {isListening ? <Volume2 size={16} /> : <Mic size={16} />}
               </button>
-            </div>
 
-            <button
-              type="button"
-              className={`ai-send ${
-                hasMessage
-                  ? "enabled"
-                  : ""
-              }`}
-              disabled={!hasMessage && !isThinking}
-              onClick={isThinking ? () => requestControllerRef.current?.abort() : sendMessage}
-              title="Send"
-            >
-              {isThinking ? <X size={16} /> : <Send size={16} />}
-            </button>
-          </div>
-
-          {/* Controls */}
-
-          <div className="ai-composer-controls">
-            <div className="ai-left-controls">
-              <div className="ai-mode-wrapper">
+              {/* Send or Stop Button */}
+              {isThinking ? (
                 <button
                   type="button"
-                  className="ai-mode-button"
-                  onClick={() =>
-                    setModeOpen(
-                      (previous) =>
-                        !previous,
-                    )
-                  }
+                  className="ai-stop-btn"
+                  onClick={() => requestControllerRef.current?.abort()}
+                  title="Stop generating"
                 >
-                  <ModeIcon size={13} />
-
-                  {currentMode.label}
-
-                  <ChevronDown
-                    size={11}
-                  />
+                  <StopCircle size={17} />
+                  <span>Stop</span>
                 </button>
-
-                {modeOpen && (
-                  <div className="ai-mode-menu">
-                    {AI_MODES.map(
-                      (item) => {
-                        const ItemIcon =
-                          item.icon;
-
-                        return (
-                          <button
-                            type="button"
-                            key={
-                              item.id
-                            }
-                            className={
-                              mode ===
-                              item.id
-                                ? "active"
-                                : ""
-                            }
-                            onClick={() =>
-                              handleModeChange(
-                                item.id,
-                              )
-                            }
-                          >
-                            <ItemIcon
-                              size={15}
-                            />
-
-                            <span>
-                              <strong>
-                                {
-                                  item.label
-                                }
-                              </strong>
-
-                              <small>
-                                {
-                                  item.description
-                                }
-                              </small>
-                            </span>
-
-                            {mode ===
-                              item.id && (
-                              <b>
-                                &#x2713;
-                              </b>
-                            )}
-                          </button>
-                        );
-                      },
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                className={`ai-control-button ${
-                  mode === "think"
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleModeChange(
-                    mode === "think"
-                      ? "ask"
-                      : "think",
-                  )
-                }
-              >
-                <Brain size={13} />
-                Think
-              </button>
-
-              <button
-                type="button"
-                className={`ai-control-button exam ${
-                  mode === "exam"
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleModeChange(
-                    mode === "exam"
-                      ? "ask"
-                      : "exam",
-                  )
-                }
-              >
-                <GraduationCap
-                  size={13}
-                />
-                Exam Ready
-              </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`ai-send-btn ${hasInput ? "active" : ""}`}
+                  disabled={!hasInput}
+                  onClick={sendMessage}
+                  title="Send message"
+                >
+                  <Send size={15} />
+                </button>
+              )}
             </div>
+          </div>
 
-            <span className="ai-send-hint">
-              Enter to send - Shift +
-              Enter for new line
-            </span>
+          <div className="ai-composer-footer-note">
+            <span>StudyOS AI can answer general questions and manage your workspace. Verify important formulas and dates.</span>
           </div>
         </div>
       </main>
 
-      {/* =====================================================
-          ACTION MODAL
-          ===================================================== */}
-
-      {selectedAction && (
-        <div className="ai-modal-backdrop studyos-modal-backdrop">
-          <div className="ai-action-modal studyos-modal studyos-modal--structured">
-            <div className="ai-modal-header studyos-modal-header">
-              <div
-                className={`ai-action-icon ${selectedAction.color}`}
-              >
-                {(() => {
-                  const ActionIcon =
-                    selectedAction.icon;
-
-                  return (
-                    <ActionIcon
-                      size={16}
-                    />
-                  );
-                })()}
-              </div>
-
-              <div>
-                <h3>
-                  AI{" "}
-                  {
-                    selectedAction.label
-                  }
-                </h3>
-
-                <p>
-                  Tell StudyOS what
-                  you want AI to do.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedAction(
-                    null,
-                  )
-                }
-              >
-                <X size={14} />
-              </button>
-            </div>
-
-            <div className="ai-modal-body studyos-modal-body">
-              <label htmlFor="ai-action-request">
-                Your request
-              </label>
-
-              <textarea
-                id="ai-action-request"
-                value={actionRequest}
-                onChange={(event) =>
-                  setActionRequest(
-                    event.target.value,
-                  )
-                }
-                placeholder={
-                  selectedAction.id ===
-                  "CREATE_TASK"
-                    ? "Create a DBMS task for tomorrow at 7 PM..."
-                    : selectedAction.id ===
-                        "CREATE_GOAL"
-                      ? "Create a goal to finish Java DSA in 30 days..."
-                      : `Tell me what you want to do with ${selectedAction.target}...`
-                }
-              />
-
-              <div className="ai-modal-security">
-                <ShieldCheck size={13} />
-
-                <div>
-                  <strong>
-                    Secure StudyOS
-                    action
-                  </strong>
-
-                  <span>
-                    The backend will
-                    validate your
-                    account before
-                    changing StudyOS
-                    data.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="ai-modal-footer studyos-modal-footer">
-              <button
-                type="button"
-                className="ai-modal-cancel"
-                onClick={() =>
-                  setSelectedAction(
-                    null,
-                  )
-                }
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="ai-modal-continue"
-                onClick={
-                  submitAction
-                }
-              >
-                <WandSparkles
-                  size={13}
-                />
-                Ask AI
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================
-          CAMERA
-          ===================================================== */}
-
+      {/* =========================================================
+          CAMERA MODAL OVERLAY
+          ========================================================= */}
       {cameraOpen && (
-        <div className="ai-camera-backdrop studyos-modal-backdrop">
-          <div className="ai-camera-modal studyos-modal studyos-modal--structured">
-            <div className="ai-camera-header studyos-modal-header">
-              <div>
-                <strong>
-                  StudyOS Camera
-                </strong>
-
-                <span>
-                  Capture an image for
-                  AI analysis
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onClick={
-                  closeCamera
-                }
-              >
+        <div className="ai-camera-modal-backdrop">
+          <div className="ai-camera-modal">
+            <div className="ai-camera-modal-header">
+              <strong>Camera Capture</strong>
+              <button type="button" onClick={closeCamera}>
                 <X size={16} />
               </button>
             </div>
-
-            <div className="ai-camera-preview studyos-modal-body">
-              <video
-                ref={
-                  cameraVideoRef
-                }
-                autoPlay
-                playsInline
-                muted
-              />
-
-              <div className="ai-camera-guide" />
+            <div className="ai-camera-preview">
+              <video ref={cameraVideoRef} autoPlay playsInline muted />
             </div>
-
-            <div className="ai-camera-footer studyos-modal-footer">
-              <button
-                type="button"
-                className="ai-camera-cancel"
-                onClick={
-                  closeCamera
-                }
-              >
+            <div className="ai-camera-modal-footer">
+              <button type="button" className="ai-btn-secondary" onClick={closeCamera}>
                 Cancel
               </button>
-
-              <button
-                type="button"
-                className="ai-camera-capture"
-                onClick={
-                  captureCameraImage
-                }
-              >
-                <Camera size={16} />
-                Capture
+              <button type="button" className="ai-btn-primary" onClick={captureCameraImage}>
+                <Camera size={15} />
+                Capture Photo
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Hidden inputs */}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.ppt,.pptx"
-        multiple
-        hidden
-        onChange={handleFiles}
-      />
-
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        hidden
-        onChange={handleFiles}
-      />
     </div>
   );
 }

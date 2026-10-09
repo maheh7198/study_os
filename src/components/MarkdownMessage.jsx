@@ -4,6 +4,8 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "./MarkdownMessage.css";
 
+import { Copy, Check, RotateCcw, ChevronRight, Square } from "lucide-react";
+
 function CodeBlock({ className = "", children, ...props }) {
   const [copied, setCopied] = useState(false);
   const language = /language-([\w-]+)/.exec(className)?.[1] || "text";
@@ -22,8 +24,11 @@ function CodeBlock({ className = "", children, ...props }) {
   return (
     <div className="markdown-code-block">
       <div className="markdown-code-header">
-        <span>{language}</span>
-        <button type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
+        <span className="markdown-code-lang">{language}</span>
+        <button type="button" className="markdown-code-copy" onClick={copy}>
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          <span>{copied ? "Copied" : "Copy"}</span>
+        </button>
       </div>
       <pre><code className={className} {...props}>{children}</code></pre>
     </div>
@@ -34,15 +39,48 @@ export function MarkdownActions({ text = "", onRegenerate, onContinue, onStop })
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      const clean = text.replace(/(?:^|\n)```studyos-action[\s\S]*?(?:```|$)/gi, "").trim();
+      await navigator.clipboard.writeText(clean);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch { setCopied(false); }
+    } catch {
+      setCopied(false);
+    }
   };
-  return <div className="markdown-actions"><button type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</button>{onRegenerate && <button type="button" onClick={onRegenerate}>Regenerate</button>}{onContinue && <button type="button" onClick={onContinue}>Continue</button>}{onStop && <button type="button" onClick={onStop}>Stop</button>}</div>;
+
+  return (
+    <div className="markdown-actions">
+      <button type="button" className={`markdown-action-btn ${copied ? "copied" : ""}`} onClick={copy} title="Copy response">
+        {copied ? <Check size={13} /> : <Copy size={13} />}
+        <span>{copied ? "Copied" : "Copy"}</span>
+      </button>
+      {onRegenerate && (
+        <button type="button" className="markdown-action-btn" onClick={onRegenerate} title="Regenerate response">
+          <RotateCcw size={13} />
+          <span>Regenerate</span>
+        </button>
+      )}
+      {onContinue && (
+        <button type="button" className="markdown-action-btn" onClick={onContinue} title="Continue generating">
+          <ChevronRight size={13} />
+          <span>Continue</span>
+        </button>
+      )}
+      {onStop && (
+        <button type="button" className="markdown-action-btn" onClick={onStop} title="Stop generation">
+          <Square size={12} />
+          <span>Stop</span>
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function MarkdownMessage({ text = "", className = "" }) {
+  const cleanText = typeof text === "string"
+    ? text.replace(/(?:^|\n)```studyos-action[\s\S]*?(?:```|$)/gi, "").trim()
+    : "";
+
   return (
     <div className={`markdown-message ${className}`}>
       <ReactMarkdown
@@ -61,7 +99,7 @@ export default function MarkdownMessage({ text = "", className = "" }) {
           table: ({ children }) => <div className="markdown-table-scroll"><table>{children}</table></div>,
         }}
       >
-        {text}
+        {cleanText}
       </ReactMarkdown>
     </div>
   );
