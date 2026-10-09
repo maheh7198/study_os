@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { createElement, useEffect, useMemo, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 import {
   FileText,
   Plus,
@@ -108,11 +109,13 @@ const Notes = ({
   const [notes, setNotes] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter((note) => note && typeof note === "object") : [];
     } catch {
       return [];
     }
   });
+  useRemoteCollection("notes", notes, setNotes);
 
   const [search, setSearch] = useState("");
   const [semesterFilter, setSemesterFilter] = useState("All Semesters");
@@ -161,7 +164,7 @@ const addNotification = (
 
   setNotifications((previous) => [
     {
-      id: `note-${Date.now()}-${Math.random()}`,
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       type,
       title,
       message,
@@ -509,13 +512,7 @@ const addNotification = (
     setShowPreview(true);
   };
 
-  const clearFilters = () => {
-    setSearch("");
-    setSemesterFilter("All Semesters");
-    setSubjectFilter("All Subjects");
-    setTypeFilter("All Types");
-    setTagFilter("All Tags");
-  };
+
 
   return (
     <div className="notes-page">
@@ -996,7 +993,7 @@ const NoteCard = ({
       </div>
 
       <div className="note-card-icon">
-        <FileIcon size={25} />
+        {createElement(FileIcon, { size: 25 })}
       </div>
 
       <div className="note-card-heading">

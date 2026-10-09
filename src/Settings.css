@@ -263,6 +263,14 @@
     align-items: flex-start;
   }
 
+  .switch-toggle {
+    height: 40px;
+  }
+
+  .switch-toggle .switch-knob {
+    top: 9px;
+  }
+
   .settings-toast {
     left: 12px;
     right: 12px;

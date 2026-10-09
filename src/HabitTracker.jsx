@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 import {
   Check,
   Flame,
@@ -97,8 +98,7 @@ const getDaysBetween = (startDate, endDate) => {
   return Math.max(0, difference);
 };
 
-const isSameOrAfter = (dateA, dateB) =>
-  dateA >= dateB;
+
 
 const getWeekdayIndex = (date) => date.getDay();
 
@@ -120,11 +120,13 @@ const HabitTracker = ({ setNotifications }) => {
         HABITS_STORAGE_KEY
       );
 
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter((habit) => habit && typeof habit === "object") : [];
     } catch {
       return [];
     }
   });
+  useRemoteCollection("habits", habits, setHabits);
 
   const [selectedDate, setSelectedDate] =
     useState(todayString());

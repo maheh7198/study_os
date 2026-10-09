@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import {
   Target,
   Code2,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import "./PlacementHub.css";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 
 const STORAGE_KEY = "studyos-placement-hub";
 
@@ -172,18 +173,62 @@ function loadData() {
   }
 }
 
-function readArray(key) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : [];
-  } catch {
-    return [];
-  }
+function toPlacementRecords(data) {
+  return Object.entries(data).flatMap(([section, value]) => [
+    ...(value.topics || []).filter((topic) => topic.source !== "default").map((topic) => ({
+      ...topic,
+      section: section === "corecs" ? "core" : section,
+      kind: "topic",
+      name: topic.name,
+      status: topic.completed ? "Completed" : "Not Started",
+    })),
+    ...(value.questions || []).map((question) => ({
+      ...question,
+      section: "dsa",
+      kind: "question",
+      name: question.title,
+      description: question.title,
+      status: question.completed ? "Completed" : "Not Started",
+    })),
+  ]);
+}
+
+function fromPlacementRecords(records) {
+  const next = Object.fromEntries(
+    Object.keys(SECTIONS).map((section) => [section, { topics: [], questions: [] }])
+  );
+  records.forEach((record) => {
+    const section = record.section === "core" ? "corecs" : record.section;
+    if (!next[section]) return;
+    const completed = record.status === "Completed" || record.completed === true;
+    if (record.kind === "question") {
+      next.dsa.questions.push({
+        ...record,
+        id: record.id,
+        number: record.number || record.questionNumber || "",
+        title: record.title || record.name,
+        difficulty: record.difficulty || "Easy",
+        completed,
+      });
+    } else {
+      next[section].topics.push({
+        ...record,
+        id: record.id,
+        name: record.name,
+        completed,
+        source: record.source || "manual",
+      });
+    }
+  });
+  return next;
 }
 
 function PlacementHub() {
   const [activeTab, setActiveTab] = useState("overview");
   const [data, setData] = useState(loadData);
+  const [placementRecords, setPlacementRecords] = useState(() => toPlacementRecords(loadData()));
+  const { ready: placementReady } = useRemoteCollection("placement/topics", placementRecords, setPlacementRecords);
+  const appliedRemoteRecords = useRef(false);
 
   const [topicModal, setTopicModal] = useState(false);
   const [aiModal, setAiModal] = useState(false);
@@ -201,6 +246,29 @@ function PlacementHub() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    if (!placementReady) return;
+    if (!appliedRemoteRecords.current) {
+      appliedRemoteRecords.current = true;
+      const remoteData = fromPlacementRecords(placementRecords);
+      const defaults = createDefaultData();
+      for (const section of Object.keys(SECTIONS)) {
+        const remoteById = new Map(remoteData[section].topics.map((topic) => [topic.id, topic]));
+        const defaultIds = new Set(defaults[section].topics.map((topic) => topic.id));
+        remoteData[section].topics = [
+          ...defaults[section].topics.map((topic) => remoteById.get(topic.id) || topic),
+          ...remoteData[section].topics.filter((topic) => !defaultIds.has(topic.id)),
+        ];
+      }
+      startTransition(() => setData(remoteData));
+      return;
+    }
+    const nextRecords = toPlacementRecords(data);
+    if (JSON.stringify(nextRecords) !== JSON.stringify(placementRecords)) {
+      startTransition(() => setPlacementRecords(nextRecords));
+    }
+  }, [data, placementReady, placementRecords]);
 
   /*
    * ONLY Placement Hub data.
@@ -272,7 +340,7 @@ function PlacementHub() {
         ...current[section],
         topics: current[section].topics.map((topic) =>
           topic.id === id
-            ? { ...topic, completed: !topic.completed }
+            ? { ...topic, source: "manual", completed: !topic.completed }
             : topic
         ),
       },

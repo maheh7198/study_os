@@ -73,7 +73,8 @@ const faqs = [
 function loadFeedback() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item === "object") : [];
   } catch {
     return [];
   }

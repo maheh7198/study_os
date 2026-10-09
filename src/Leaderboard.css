@@ -263,6 +263,71 @@
   text-align: center;
 }
 
+.leaderboard-ranking-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leaderboard-ranking-list li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.leaderboard-ranking-list li:last-child {
+  border-bottom: 0;
+}
+
+.leaderboard-ranking-current {
+  background: color-mix(in srgb, var(--primary) 7%, var(--card));
+}
+
+.leaderboard-ranking-rank {
+  color: var(--soft-text);
+  font-weight: 700;
+}
+
+.leaderboard-ranking-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.leaderboard-ranking-list li strong {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.studyos.night .leaderboard-card {
+  border-color: var(--border);
+  background: var(--card);
+}
+
+.studyos.night .leaderboard-card-header {
+  border-color: var(--border);
+}
+
+.studyos.night .leaderboard-card-header h2,
+.studyos.night .leaderboard-empty h3 {
+  color: var(--text);
+}
+
+.studyos.night .leaderboard-status {
+  border-color: var(--border);
+  background: var(--card-alt);
+  color: var(--soft-text);
+}
+
+.studyos.night .leaderboard-empty p,
+.studyos.night .leaderboard-card-header p {
+  color: var(--soft-text);
+}
+
 .empty-trophy {
   width: 58px;
   height: 58px;

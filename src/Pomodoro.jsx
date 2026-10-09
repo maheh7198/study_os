@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import {
   Timer,
   Play,
@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import "./Pomodoro.css";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 
 const POMODORO_STORAGE_KEY = "studyos-pomodoro-sessions";
 const POMODORO_TIMER_STORAGE_KEY = "studyos-pomodoro-active-timer";
@@ -62,11 +63,13 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
   const [completedSessions, setCompletedSessions] = useState(() => {
     try {
       const saved = localStorage.getItem(POMODORO_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter((session) => session && typeof session === "object") : [];
     } catch {
       return [];
     }
   });
+  useRemoteCollection("pomodoros", completedSessions, setCompletedSessions);
 
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -575,6 +578,9 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
     }, 500);
   };
 
+  const completeTimerRef = useRef(() => {});
+  useEffect(() => { completeTimerRef.current = completeTimer; });
+
   /* -------------------------------------------------------
      RESTORE TIMER AFTER NAVIGATION / REFRESH
   ------------------------------------------------------- */
@@ -604,12 +610,13 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
           ? savedTimer.mode
           : "focus";
 
-      setDurations(restoredDurations);
-      setMode(restoredMode);
-
-      setSelectedSubject(savedTimer.selectedSubject || "");
-      setSelectedTopic(savedTimer.selectedTopic || "");
-      setSessionNote(savedTimer.sessionNote || "");
+      startTransition(() => {
+        setDurations(restoredDurations);
+        setMode(restoredMode);
+        setSelectedSubject(savedTimer.selectedSubject || "");
+        setSelectedTopic(savedTimer.selectedTopic || "");
+        setSessionNote(savedTimer.sessionNote || "");
+      });
 
       const savedIsRunning = Boolean(savedTimer.isRunning);
 
@@ -621,17 +628,17 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
           )
         );
 
-        setRemainingSeconds(secondsLeft);
+        startTransition(() => setRemainingSeconds(secondsLeft));
 
         endTimeRef.current = Number(savedTimer.endTime);
         startedAtRef.current =
           savedTimer.startedAt || new Date().toISOString();
 
         if (secondsLeft <= 0) {
-          setIsRunning(false);
+          startTransition(() => setIsRunning(false));
 
           setTimeout(() => {
-            completeTimer({
+            completeTimerRef.current({
               completedMode: restoredMode,
               completedDurationSeconds:
                 restoredDurations[restoredMode] * 60,
@@ -650,15 +657,15 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
             });
           }, 0);
         } else {
-          setIsRunning(true);
+          startTransition(() => setIsRunning(true));
         }
       } else {
         const restoredRemaining =
           Number(savedTimer.remainingSeconds) ||
           restoredDurations[restoredMode] * 60;
 
-        setRemainingSeconds(restoredRemaining);
-        setIsRunning(false);
+        startTransition(() => setRemainingSeconds(restoredRemaining));
+        startTransition(() => setIsRunning(false));
 
         endTimeRef.current = null;
         startedAtRef.current =
@@ -701,7 +708,7 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
           intervalRef.current = null;
         }
 
-        completeTimer();
+        completeTimerRef.current();
       }
     };
 
@@ -759,6 +766,8 @@ const Pomodoro = ({ subjects = [], setNotifications }) => {
     selectedSubject,
     selectedTopic,
     sessionNote,
+    mode,
+    durations,
   ]);
 
   /* -------------------------------------------------------

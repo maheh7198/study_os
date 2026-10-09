@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 import "./Tasks.css";
 import {
   AlertCircle,
@@ -466,6 +467,7 @@ export default function Tasks({
       return [];
     }
   });
+  useRemoteCollection("tasks", tasks, setTasks);
 
   const [search, setSearch] = useState("");
   const [subjectFilter, setSubjectFilter] =

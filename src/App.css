@@ -524,6 +524,16 @@ input:focus-visible {
   padding-bottom: 96px;
 }
 
+.api-status-alert {
+  margin: 12px 24px 0;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, var(--card));
+  color: var(--text);
+  font-size: 14px;
+}
+
 .page-shell {
   width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
@@ -2359,6 +2369,8 @@ input:focus-visible {
 
 .ai-popup-body {
   padding: 14px;
+  max-height: min(55vh, 440px);
+  overflow-y: auto;
 }
 
 .ai-message {
@@ -2385,6 +2397,24 @@ input:focus-visible {
 
   line-height: 1.5;
 }
+
+.ai-popup { background: var(--card); border-color: var(--border); }
+.ai-popup-body .ai-message { display: block; margin: 8px 0; padding: 10px; color: var(--text); }
+.ai-popup-body .ai-message.user { width: fit-content; max-width: 82%; margin-left: auto; color: var(--text); background: var(--surface-2); }
+.ai-popup-body .ai-message.assistant { background: transparent; }
+.ai-popup-body .markdown-message { font-size: 15px; line-height: 1.6; }
+.ai-popup-body .markdown-message h1 { font-size: 18px; }
+.ai-popup-body .markdown-message h2 { font-size: 17px; }
+.ai-popup-body .markdown-message h3 { font-size: 16px; }
+.ai-popup-body .markdown-code-block pre { font-size: 12px; }
+.ai-popup-body .ai-message .markdown-actions { margin-top: 5px; }
+.ai-input textarea { flex: 1; min-width: 0; max-height: 112px; resize: none; padding: 8px; border: 0; color: var(--text); background: transparent; font: 15px/1.5 var(--font-sans); }
+.ai-input textarea { font-size: 15px; }
+.ai-popup-body .markdown-message p { font-size: 15px; }
+.ai-popup-body .markdown-message { color: var(--text); }
+.ai-popup-body .markdown-message p, .ai-popup-body .markdown-message li { color: var(--text); font-size: 15px; }
+.ai-popup-body .ai-message.assistant .markdown-message { font-size: 15px; line-height: 1.55; }
+.ai-popup-body .ai-message.assistant .markdown-message p { color: var(--text); font-size: 15px; line-height: 1.55; }
 
 .ai-quick-prompts {
   display: flex;
@@ -2719,6 +2749,8 @@ input:focus-visible {
   color: #cbd5e1;
 }
 
+.studyos.night .ai-popup-body .ai-message p { color: var(--text); }
+
 .studyos.night .ai-input {
   border-color: var(--border);
 }
@@ -2844,8 +2876,13 @@ input:focus-visible {
 
   .theme-switch {
     display: block;
-    transform: scale(0.9);
+    height: 40px;
+    transform: none;
     transform-origin: center;
+  }
+
+  .theme-switch .switch-knob {
+    top: 9px;
   }
 
   .header-icon {
@@ -3373,6 +3410,11 @@ input:focus-visible {
 
   .panel-header h3 {
     font-size: 13px;
+  }
+
+  .panel-header > button {
+    min-height: 40px;
+    padding: 0 5px;
   }
 
   .empty-state {

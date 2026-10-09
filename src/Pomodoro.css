@@ -1194,6 +1194,10 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .pomodoro-duration-presets button {
+    min-height: 40px;
+  }
+
   .pomodoro-toast {
     top: 72px;
     right: 10px;

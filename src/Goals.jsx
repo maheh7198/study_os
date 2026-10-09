@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 import { createPortal } from "react-dom";
 import {
   Target,
@@ -699,6 +700,7 @@ const Goals = ({
 }) => {
   const [search, setSearch] = useState("");
   const [goals, setGoals] = useState([]);
+  useRemoteCollection("goals", goals, setGoals);
 
   const [showGoalModal, setShowGoalModal] =
     useState(false);
@@ -1730,7 +1732,7 @@ const Goals = ({
             </form>
           </div>
         </div>,
-        document.body
+        document.querySelector(".studyos")
       )
     : null;
 
@@ -1986,7 +1988,7 @@ const Goals = ({
               </div>
             </div>
           </div>,
-          document.body
+          document.querySelector(".studyos")
         )
       : null;
 

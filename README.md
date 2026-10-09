@@ -1,41 +1,101 @@
 # StudyOS
 
-StudyOS is a student productivity and placement-prep dashboard built with React and Vite.
+StudyOS is a student productivity and placement preparation app with a React frontend, an Express API, and a MySQL database.
 
-## Run locally
+## Features
 
-1. Install dependencies:
-   npm install
-2. Start the app in development mode:
-   npm run dev
-3. Build for production:
-   npm run build
-4. Lint the codebase:
-   npm run lint
+- Dashboard, subjects and topics, tasks, notes, goals, and study planning
+- Pomodoro sessions, habit tracking, analytics, placement preparation, and leaderboard
+- AI Mentor integration through backend environment settings
+- Account registration, login, and server-side sessions
+- Light and night themes
+
+## Tech stack
+
+- Frontend: React, JavaScript, JSX, Vite, CSS
+- Backend: Node.js, Express.js, raw SQL with `mysql2`
+- Database: MySQL 8
+
+The current frontend uses custom CSS and does not depend on Bootstrap.
 
 ## Project structure
 
-- src/App.jsx — app shell, navigation, theme, notifications
-- src/Settings.jsx — user settings page with local persistence
-- src/Help.jsx — help and feedback page
-- src/components — shared UI primitives
-- src/*.jsx — module pages for notes, goals, tasks, analytics, and more
+```text
+StudyOS/
+├── public/                 # Static assets and favicon
+├── src/                    # React app, pages, styles, services, components
+├── scripts/                # Local browser and API checks
+├── backend/
+│   ├── database/            # MySQL schema, seed, migrations
+│   ├── src/                 # Express routes, services, middleware, config
+│   ├── scripts/
+│   └── test/
+├── .env.example             # Frontend Vite settings
+└── package.json             # Frontend scripts and dependencies
+```
 
-## LocalStorage keys
+## Requirements
 
-StudyOS stores its app data in browser localStorage under keys such as:
+- Node.js 20 or newer
+- MySQL 8
 
-- studyos-tasks
-- studyos-subjects
-- studyos-goals
-- studyos-habits
-- studyos-notes
-- studyos-notifications
-- studyos-placement-hub
-- studyos-pomodoro-sessions
-- studyos-study-plans
-- studyos-ai-history
-- studyos-settings
-- studyos-feedback
+## Local setup
 
-This makes the app work without a backend while keeping the data local to the browser.
+Install and configure the backend:
+
+```powershell
+cd backend
+npm install
+Copy-Item .env.example .env
+```
+
+Set the local MySQL values in `backend/.env`. To create a new database, create the database named by `DB_NAME`, then apply the schema:
+
+```powershell
+Get-Content database/schema.sql | mysql -u root -p studyos
+```
+
+Start the API in one terminal:
+
+```powershell
+cd backend
+npm run dev
+```
+
+In another terminal, from the repository root, install and start the frontend:
+
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+The frontend defaults to the Vite `/api` proxy at `http://localhost:5000`. Set `BACKEND_DEV_URL` in the frontend `.env` to change the local API target. `VITE_API_URL` is the public API base path or origin ending in `/api`; never put credentials in a `VITE_*` variable.
+
+For an existing StudyOS database, configure the backend variables and run `npm run migrate:auth` from `backend/`. This adds authentication storage without deleting existing records. Existing data under the legacy development account remains associated with that account.
+
+## Environment variables
+
+Copy each `.env.example` to `.env` in its respective folder. Backend settings include database connection values, `PORT`, `CLIENT_URL`, and optional AI provider settings. Keep real credentials out of source control and frontend variables.
+
+## Checks
+
+From the repository root:
+
+```powershell
+npm run lint
+npm run build
+```
+
+From `backend/`:
+
+```powershell
+npm run lint
+npm test
+```
+
+The backend integration test uses the configured MySQL database and creates then removes test accounts. Use a disposable test database before running it.
+
+## Deployment notes
+
+Apply `backend/database/schema.sql` to MySQL 8 before starting a new deployment. Configure the backend's production environment, including the exact frontend origin in `CLIENT_URL`. Serve the frontend over HTTPS and configure its `VITE_API_URL` for the deployed API. Do not commit `.env` files or push credentials.

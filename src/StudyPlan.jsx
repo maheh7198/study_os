@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 
 import {
   CalendarDays,
@@ -18,7 +19,6 @@ import {
   GraduationCap,
   LayoutGrid,
   Bell,
-  Timer,
   BarChart3,
 } from "lucide-react";
 
@@ -201,7 +201,6 @@ const defaultTimetableForm = {
 function StudyPlan({
   subjects = [],
   setNotifications,
-  navigate,
 }) {
 
   /* -------------------------------------------------------
@@ -214,11 +213,13 @@ function StudyPlan({
         SESSION_STORAGE_KEY
       );
 
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed.filter((record) => record && typeof record === "object") : [];
     } catch {
       return [];
     }
   });
+  useRemoteCollection("study-plans/sessions", sessions, setSessions);
 
 
   const [plans, setPlans] = useState(() => {
@@ -232,6 +233,7 @@ function StudyPlan({
       return [];
     }
   });
+  useRemoteCollection("study-plans/plans", plans, setPlans);
 
 
   const [timetable, setTimetable] = useState(() => {
@@ -245,6 +247,7 @@ function StudyPlan({
       return [];
     }
   });
+  useRemoteCollection("study-plans/timetable", timetable, setTimetable);
 
 
   const [activeView, setActiveView] =
@@ -406,6 +409,26 @@ const studyPlanReminderKeys = useRef(new Set());
   };
 
 
+function addNotification(setNotifications, title, message, type = "study") {
+    if (typeof setNotifications !== "function") {
+      return;
+    }
+
+    const notification = {
+      id: createId("notification"),
+      title,
+      message,
+      type,
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    setNotifications((current) => [
+      notification,
+      ...(current || []),
+    ]);
+  }
+
   useEffect(() => {
     if (!sessions.length) {
       return undefined;
@@ -522,6 +545,7 @@ const studyPlanReminderKeys = useRef(new Set());
           /* Top-right StudyOS notification */
 
           addNotification(
+            setNotifications,
             "Study Session Reminder",
             message,
             "study"
@@ -591,7 +615,7 @@ const studyPlanReminderKeys = useRef(new Set());
         reminderInterval
       );
 
-  }, [sessions]);
+  }, [sessions, setNotifications]);
 
   /* -------------------------------------------------------
      SAVE TO LOCAL STORAGE
@@ -650,29 +674,7 @@ const studyPlanReminderKeys = useRef(new Set());
      NOTIFICATION
      ------------------------------------------------------- */
 
-  const addNotification = (
-    title,
-    message,
-    type = "study"
-  ) => {
-    if (typeof setNotifications !== "function") {
-      return;
-    }
 
-    const notification = {
-      id: createId("notification"),
-      title,
-      message,
-      type,
-      read: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    setNotifications((current) => [
-      notification,
-      ...(current || []),
-    ]);
-  };
 
 
   /* -------------------------------------------------------
@@ -794,19 +796,6 @@ const studyPlanReminderKeys = useRef(new Set());
       0
     );
   }, [sessions]);
-
-
-  const completedMinutes = useMemo(() => {
-    return completedSessions.reduce(
-      (total, session) =>
-        total +
-        calculateDuration(
-          session.startTime,
-          session.endTime
-        ),
-      0
-    );
-  }, [completedSessions]);
 
 
   const progress = useMemo(() => {

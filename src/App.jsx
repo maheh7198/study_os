@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   Menu,
   Search,
@@ -35,38 +35,55 @@ import {
   Inbox,
 } from "lucide-react";
 import studyOSLogo from "./assets/logo.png";
-import Subjects from "./Subjects.jsx";
-import Tasks from "./Tasks.jsx";
-import Notes from "./Notes.jsx";
-import Goals from "./Goals.jsx";
-import StudyPlan from "./StudyPlan.jsx";
-import Pomodoro from "./Pomodoro.jsx";
-import HabitTracker from "./HabitTracker.jsx";
-import Analytics from "./Analytics.jsx";
-import PlacementHub from "./PlacementHub.jsx";
-import Leaderboard from "./Leaderboard.jsx";
-import AIMentor from "./AIMentor.jsx";
-import SettingsPage from "./Settings.jsx";
-import HelpPage from "./Help.jsx";
+import { apiRequest, apiStreamRequest } from "./services/api.js";
+import MarkdownMessage, { MarkdownActions } from "./components/MarkdownMessage.jsx";
+import ErrorBanner from "./components/ErrorBanner.jsx";
+import "./components/MarkdownMessage.css";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
+const Subjects = lazy(() => import("./Subjects.jsx"));
+const Tasks = lazy(() => import("./Tasks.jsx"));
+const Notes = lazy(() => import("./Notes.jsx"));
+const Goals = lazy(() => import("./Goals.jsx"));
+const StudyPlan = lazy(() => import("./StudyPlan.jsx"));
+const Pomodoro = lazy(() => import("./Pomodoro.jsx"));
+const HabitTracker = lazy(() => import("./HabitTracker.jsx"));
+const Analytics = lazy(() => import("./Analytics.jsx"));
+const PlacementHub = lazy(() => import("./PlacementHub.jsx"));
+const Leaderboard = lazy(() => import("./Leaderboard.jsx"));
+const AIMentor = lazy(() => import("./AIMentor.jsx"));
+const SettingsPage = lazy(() => import("./Settings.jsx"));
+const HelpPage = lazy(() => import("./Help.jsx"));
+import { AppErrorBoundary, ErrorPage } from "./components/AppErrorBoundary.jsx";
 
 import "./App.css";
 import "./ModalSystem.css";
 
-/* =========================================================
-   USER
-   Later this will come from Login / Backend
-   ========================================================= */
-
-const currentUser = {
-  name: "",
-  role: "Student",
-};
-
 const SUBJECTS_STORAGE_KEY = "studyos-subjects";
 const NOTIFICATIONS_STORAGE_KEY = "studyos-notifications";
 const THEME_STORAGE_KEY = "studyos-theme";
-const NOTIFICATION_VERSION_KEY = "studyos-notifications-version";
 const SETTINGS_STORAGE_KEY = "studyos-settings";
+
+function createNotificationId() {
+  const randomPart = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `notification-${randomPart}`;
+}
+
+function normalizeNotificationIds(value) {
+  const usedIds = new Set();
+  return (Array.isArray(value) ? value : []).map((item) => {
+    const id = typeof item?.id === "string" ? item.id : String(item?.id || "");
+    if (/^[\w-]{1,64}$/.test(id) && !usedIds.has(id)) {
+      usedIds.add(id);
+      return item;
+    }
+    let nextId = createNotificationId();
+    while (usedIds.has(nextId)) nextId = createNotificationId();
+    usedIds.add(nextId);
+    return { ...item, id: nextId };
+  });
+}
 
 function readSettings() {
   try {
@@ -138,6 +155,8 @@ const searchablePages = [
   ...moreItems.map(([label]) => label),
 ];
 
+
+
 /* =========================================================
    DASHBOARD STATS
    ========================================================= */
@@ -156,13 +175,15 @@ const stats = [
    APP
    ========================================================= */
 
-function App() {
+function App({ user, onLogout }) {
   const [activePage, setActivePage] = useState("Dashboard");
-  const [profileName, setProfileName] = useState(() => getProfileName());
+  const [profileName, setProfileName] = useState(() => getProfileName() === "Student" ? user.name : getProfileName());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
+    if (new URLSearchParams(window.location.search).get("theme") === "night") return true;
+    if (new URLSearchParams(window.location.search).get("theme") === "light") return false;
     try {
       const settings = readSettings();
       const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -186,6 +207,10 @@ function App() {
     }
   });
   const [message, setMessage] = useState("");
+  const [aiMessages, setAiMessages] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const floatingControllerRef = useRef(null);
   const [greeting, setGreeting] = useState("Good Morning");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
@@ -195,7 +220,7 @@ function App() {
     try {
       const stored = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
       const parsed = stored ? JSON.parse(stored) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return normalizeNotificationIds(parsed);
     } catch { return []; }
   });
   const [subjects, setSubjects] = useState(() => {
@@ -207,6 +232,52 @@ function App() {
       return [];
     }
   });
+  const [apiStatus, setApiStatus] = useState(null);
+
+  useRemoteCollection("subjects", subjects, setSubjects);
+  useRemoteCollection("notifications", notifications, setNotifications);
+
+  useEffect(() => {
+    const handleAccountChange = (event) => {
+      if (event.key === "studyos-session-logout" || (event.key === "studyos-active-account" && event.newValue !== user.id)) {
+        onLogout(false);
+      }
+    };
+    window.addEventListener("storage", handleAccountChange);
+    return () => window.removeEventListener("storage", handleAccountChange);
+  }, [onLogout, user.id]);
+
+  useEffect(() => {
+    const updateStatus = (event) => {
+      setApiStatus(event.detail?.status === "error" ? event.detail.message : null);
+    };
+    window.addEventListener("studyos-api-status", updateStatus);
+    return () => window.removeEventListener("studyos-api-status", updateStatus);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    apiRequest("/profile")
+      .then(async (profile) => {
+        if (!active) return;
+        const localSettings = readSettings();
+        const localName = localSettings.profileName?.trim() || "Student";
+        if (localName !== "Student" && localName !== profile.name) {
+          await apiRequest("/profile", { method: "PUT", body: { name: localName } });
+          return;
+        }
+        if (profile.name && profile.name !== localName) {
+          const nextSettings = { ...localSettings, profileName: profile.name };
+          localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
+          setProfileName(profile.name);
+          window.dispatchEvent(new Event("studyos-settings-changed"));
+        }
+      })
+      .catch((error) => {
+        if (active) setApiStatus(error.message || "Unable to load your profile.");
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(SUBJECTS_STORAGE_KEY, JSON.stringify(subjects));
@@ -215,19 +286,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
   }, [notifications]);
-
-  useEffect(() => {
-    try {
-      const currentVersion = localStorage.getItem(NOTIFICATION_VERSION_KEY);
-      if (currentVersion !== "2") {
-        localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify([]));
-        localStorage.removeItem("studyos-task-reminders-sent");
-        localStorage.setItem(NOTIFICATION_VERSION_KEY, "2");
-      }
-    } catch {
-      // Ignore storage failures and continue safely.
-    }
-  }, []);
 
   useEffect(() => {
     try {
@@ -464,23 +522,95 @@ function App() {
     }
   };
 
-  const submitAI = (e) => {
+  const submitAI = async (e) => {
     e.preventDefault();
 
-    if (!message.trim()) return;
-
+    const question = message.trim();
+    if (!question || aiLoading) return;
+    setAiMessages((previous) => [...previous, { id: crypto.randomUUID(), role: "user", content: question }]);
     setMessage("");
+    setAiLoading(true);
+    setAiError(null);
+    const controller = new AbortController(); floatingControllerRef.current = controller;
+    try {
+      const response = await apiStreamRequest("/ai/chat/stream", { signal: controller.signal, body: { message: question, history: aiMessages.slice(-19) } });
+      if (!response.ok || !response.body) throw new Error(`AI request failed (${response.status}).`);
+      const id = crypto.randomUUID(); setAiMessages((previous) => [...previous, { id, role: "assistant", content: "" }]);
+      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read(); if (done) break;
+        buffer += decoder.decode(value, { stream: true }); const events = buffer.split("\n\n"); buffer = events.pop() || "";
+        for (const event of events) {
+          const line = event.split("\n").find((part) => part.startsWith("data: ")); if (!line) continue;
+          const data = JSON.parse(line.slice(6));
+          if (data.type === "notice") setAiError({ title: "Local AI fallback", message: data.message });
+          if (data.type === "error") throw Object.assign(new Error(data.message), { status: data.status });
+          if (data.type === "token") setAiMessages((previous) => previous.map((item) => item.id === id ? { ...item, content: item.content + data.text } : item));
+          if (data.type === "done") setAiMessages((previous) => previous.map((item) => item.id === id ? { ...item, truncated: data.response.truncated, confirmationId: data.response.confirmationId, action: data.response.action } : item));
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setAiError(error);
+        setAiMessages((previous) => [...previous, {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: error.message || "The AI request could not be completed.",
+        }]);
+      }
+    } finally {
+      floatingControllerRef.current = null;
+      setAiLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    setProfileOpen(false);
+  const confirmFloatingAIAction = async (messageItem) => {
+    if (!messageItem.confirmationId || aiLoading) return;
+    setAiLoading(true);
+    try {
+      const response = await apiRequest("/ai/chat", {
+        method: "POST",
+        body: { message: "Confirm the requested action.", confirmationId: messageItem.confirmationId, confirm: true },
+      });
+      setAiMessages((previous) => previous.map((item) => item.id === messageItem.id
+        ? { ...item, confirmationId: null }
+        : item).concat({ id: crypto.randomUUID(), role: "assistant", content: response.message }));
+      window.dispatchEvent(new Event("studyos-data-changed"));
+    } catch (error) {
+      setAiMessages((previous) => [...previous, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: error.message || "The requested action could not be completed.",
+      }]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
-    /*
-      Later:
-      localStorage/sessionStorage clear
-      API logout
-      Navigate to Login
-    */
+  const retryFloatingMessage = async (item, continueAnswer = false) => {
+    const question = [...aiMessages.slice(0, aiMessages.findIndex((entry) => entry.id === item.id))].reverse().find((entry) => entry.role === "user")?.content;
+    if (!question) return;
+    setAiLoading(true); setAiError(null);
+    const controller = new AbortController();
+    floatingControllerRef.current = controller;
+    try {
+      const response = await apiStreamRequest("/ai/chat/stream", { signal: controller.signal, body: { message: question, history: aiMessages.slice(0, aiMessages.findIndex((entry) => entry.id === item.id)).slice(-20), continue: continueAnswer } });
+      if (!response.ok || !response.body) throw new Error(`AI request failed (${response.status}).`);
+      const id = item.id; setAiMessages((previous) => previous.map((entry) => entry.id === id ? { ...entry, content: "" } : entry));
+      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = "";
+      while (true) { const { value, done } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const events = buffer.split("\n\n"); buffer = events.pop() || ""; for (const event of events) { const line = event.split("\n").find((part) => part.startsWith("data: ")); if (!line) continue; const data = JSON.parse(line.slice(6)); if (data.type === "token") setAiMessages((previous) => previous.map((entry) => entry.id === id ? { ...entry, content: entry.content + data.text } : entry)); if (data.type === "done") setAiMessages((previous) => previous.map((entry) => entry.id === id ? { ...entry, truncated: data.response.truncated } : entry)); if (data.type === "error") throw new Error(data.message); } }
+    } catch (error) { if (!controller.signal.aborted) setAiError(error); }
+    finally { floatingControllerRef.current = null; setAiLoading(false); }
+  };
+
+  const handleLogout = async () => {
+    setProfileOpen(false);
+    try {
+      await apiRequest("/auth/logout", { method: "POST" });
+      onLogout();
+    } catch (error) {
+      setApiStatus(error.message || "Unable to sign out.");
+    }
   };
 
   return (
@@ -497,7 +627,7 @@ function App() {
         {/* BRAND */}
         <div className="sidebar-top">
           <div className="sidebar-brand">
-            <img className="sidebar-logo" src={studyOSLogo} alt="StudyOS — Plan, Learn, Grow" />
+            <img className="sidebar-logo" src={studyOSLogo} alt="StudyOS logo" />
           </div>
 
           <div className="sidebar-description">
@@ -570,7 +700,7 @@ function App() {
           ))}
 
           <div className="sidebar-quote">
-            <span>“</span>
+            <span>&#x201C;</span>
 
             <em>
               Small Consistent
@@ -639,7 +769,7 @@ function App() {
               </button>
 
               <input
-                placeholder="Search StudyOS — notes, tasks, subjects, topics..."
+                placeholder="Search StudyOS - notes, tasks, subjects, topics..."
                 type="text"
                 ref={searchInputRef}
                 value={searchQuery}
@@ -690,9 +820,9 @@ function App() {
 
           <div className="header-meta">
             <span>{headerDayLabel}</span>
-            <span className="header-meta-separator" aria-hidden="true">·</span>
+            <span className="header-meta-separator" aria-hidden="true">&middot;</span>
             <span>{headerDateLabel}</span>
-            <span className="header-meta-separator" aria-hidden="true">·</span>
+            <span className="header-meta-separator" aria-hidden="true">&middot;</span>
             <time dateTime={currentTime.toISOString()}>{headerTimeLabel}</time>
           </div>
 
@@ -763,7 +893,7 @@ function App() {
                   <strong>{name}</strong>
 
                   <span>
-                    {currentUser.role}
+                    {user.role}
                   </span>
                 </div>
 
@@ -790,7 +920,10 @@ function App() {
                       <strong>{name}</strong>
 
                       <span>
-                        {currentUser.role}
+                        {user.role}
+                      </span>
+                      <span className="profile-menu-email">
+                        {user.email}
                       </span>
                     </div>
                   </div>
@@ -842,10 +975,18 @@ function App() {
           </div>
         </header>
 
+        {apiStatus && (
+          <div className="api-status-alert" role="status">
+            {apiStatus}
+          </div>
+        )}
+
         {/* ===================================================
             CONTENT
             =================================================== */}
 
+        <AppErrorBoundary key={activePage}>
+        <Suspense fallback={<div className="auth-loading" role="status">Loading page?</div>}>
         {activePage === "Dashboard" ? (
   <Dashboard
   navigate={navigate}
@@ -893,17 +1034,16 @@ function App() {
   ) : activePage === "Leaderboard" ? (
   <Leaderboard />
   ) : activePage === "AI Mentor" ? (
-  <AIMentor navigate={navigate} />
+  <AIMentor />
 ) : activePage === "Settings" ? (
   <SettingsPage />
 ) : activePage === "Help & Feedback" ? (
   <HelpPage />
 ) : (
-  <ModulePage
-    page={activePage}
-    setAiOpen={setAiOpen}
-  />
+  <ErrorPage status={404} />
 )}
+        </Suspense>
+        </AppErrorBoundary>
 
         {/* ===================================================
             FOOTER
@@ -926,7 +1066,7 @@ function App() {
           </div>
 
           <span className="footer-right">
-            Made for Students · Built for Growth
+            Made for Students &middot; Built for Growth
           </span>
         </footer>
       </main>
@@ -979,16 +1119,30 @@ function App() {
           </div>
 
           <div className="ai-popup-body">
-            <div className="ai-message">
+                {aiMessages.length === 0 && <div className="ai-message assistant">
               <Sparkles size={15} />
 
               <p>
                 Hi! I'm your StudyOS AI. Ask me about
                 studies, coding, exams or productivity.
               </p>
-            </div>
+            </div>}
 
-            <div className="ai-quick-prompts">
+            {aiMessages.map((item) => (
+              <div className={`ai-message ${item.role === "user" ? "user" : "assistant"}`} key={item.id}>
+                <MarkdownMessage text={item.content} />
+                {item.role === "assistant" && <MarkdownActions text={item.content} onRegenerate={() => retryFloatingMessage(item)} onContinue={item.truncated ? () => retryFloatingMessage(item, true) : undefined} />}
+                {item.confirmationId && (
+                  <button type="button" disabled={aiLoading} onClick={() => confirmFloatingAIAction(item)}>
+                    Confirm {item.action?.replace(/^delete/, "delete ")}
+                  </button>
+                )}
+              </div>
+            ))}
+            {aiLoading && <div className="ai-message assistant" role="status"><p>StudyOS AI is thinking...</p></div>}
+            {aiError && <ErrorBanner error={aiError} onRetry={aiError.retryable ? () => { const failed = [...aiMessages].reverse().find((item) => item.role === "user"); if (failed) { setMessage(failed.content); setAiMessages((previous) => previous.filter((item) => item.id !== failed.id)); } setAiError(null); } : undefined} />}
+
+            {aiMessages.length === 0 && <div className="ai-quick-prompts">
               <button
                 onClick={() =>
                   setMessage(
@@ -1018,23 +1172,23 @@ function App() {
               >
                 Exam preparation
               </button>
-            </div>
+            </div>}
           </div>
 
           <form
             className="ai-input"
             onSubmit={submitAI}
           >
-            <input
+            <textarea
               value={message}
-              onChange={(e) =>
-                setMessage(e.target.value)
-              }
-              placeholder="Ask StudyOS AI..."
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (aiLoading) return; e.currentTarget.form?.requestSubmit(); } }}
+              placeholder="Message StudyOS AI..."
+              rows={1}
             />
 
-            <button type="submit">
-              <Send size={17} />
+            <button type="button" onClick={() => aiLoading ? floatingControllerRef.current?.abort() : document.querySelector(".ai-input")?.requestSubmit()} disabled={!message.trim() && !aiLoading}>
+              {aiLoading ? <X size={17} /> : <Send size={17} />}
             </button>
           </form>
         </div>
@@ -1107,12 +1261,37 @@ function App() {
    ========================================================= */
 
 function Dashboard({ navigate, greeting, subjectCount, profileName }) {
-  
-  const dashboardStats = stats.map(([label, value, Icon, type]) =>
-  label === "Subjects"
-    ? [label, subjectCount, Icon, type]
-    : [label, value, Icon, type]
-);
+  const [dashboardData, setDashboardData] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    apiRequest("/dashboard")
+      .then((data) => {
+        if (active) setDashboardData(data);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  const values = {
+    "Subjects": subjectCount,
+    "Tasks Done": dashboardData?.stats?.tasksDone ?? 0,
+    "Active Goals": dashboardData?.stats?.activeGoals ?? 0,
+    "Study Hours This Week": `${dashboardData?.stats?.studyHoursThisWeek ?? 0}h`,
+    "Pomodoro Sessions": dashboardData?.stats?.pomodoroSessions ?? 0,
+    "Level": dashboardData?.stats?.level ?? 1,
+    "Streak": dashboardData?.stats?.streak ?? 0,
+  };
+  const dashboardStats = stats.map(([label, , Icon, type]) => [
+    label,
+    values[label],
+    Icon,
+    type,
+  ]);
+  const todayTasks = dashboardData?.todayTasks || [];
+  const activeGoals = (dashboardData?.activeGoals || []).filter((goal) => goal.status !== "Completed");
+  const upcomingDeadlines = dashboardData?.upcomingDeadlines || [];
+  const recentActivity = dashboardData?.recentActivity || [];
   return (
     <div className="dashboard">
       {/* HERO */}
@@ -1128,7 +1307,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
             {profileName && profileName !== "Student"
               ? `, ${profileName}`
               : ""}
-            ! <span>👋</span>
+            ! <span aria-hidden="true">&#x1F44B;</span>
           </h1>
 
           <h2>
@@ -1172,7 +1351,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
 
             <div>
               <strong>Focus</strong>
-              <span>Create · Grow</span>
+              <span>Create &middot; Grow</span>
             </div>
           </div>
         </div>
@@ -1208,6 +1387,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
             title="Today's Tasks"
             icon={CheckSquare}
             type="blue"
+            items={todayTasks.map((task) => task.title)}
             emptyTitle="No tasks for today"
             emptyText="Add your first task and start making progress."
             button="Add Task"
@@ -1219,6 +1399,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
             title="Active Goals"
             icon={Target}
             type="purple"
+            items={activeGoals.map((goal) => goal.title)}
             emptyTitle="No active goals"
             emptyText="Create a goal to track your progress."
             button="Add Goal"
@@ -1232,6 +1413,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
             title="Upcoming Deadlines"
             icon={CalendarDays}
             type="cyan"
+            items={upcomingDeadlines.map((task) => task.title)}
             emptyTitle="No upcoming deadlines"
             emptyText="Your important deadlines will appear here."
             button="View Schedule"
@@ -1245,6 +1427,7 @@ function Dashboard({ navigate, greeting, subjectCount, profileName }) {
             title="Recent Activity"
             icon={TrendingUp}
             type="orange"
+            items={recentActivity.map((activity) => activity.metadata?.title || activity.event_type.replaceAll("_", " ").toLowerCase())}
             emptyTitle="No recent activity"
             emptyText="Your study activity will appear here."
             button="View Analytics"
@@ -1316,6 +1499,7 @@ function OverviewPanel({
   type,
   emptyTitle,
   emptyText,
+  items = [],
   button,
   onClick,
 }) {
@@ -1344,9 +1528,11 @@ function OverviewPanel({
         </div>
 
         <div className="empty-copy">
-          <strong>{emptyTitle}</strong>
+          <strong>{items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : emptyTitle}</strong>
 
-          <span>{emptyText}</span>
+          {items.length
+            ? items.slice(0, 3).map((item, index) => <span key={`${item}-${index}`}>{item}</span>)
+            : <span>{emptyText}</span>}
         </div>
 
         {button && (
@@ -1363,66 +1549,5 @@ function OverviewPanel({
   );
 }
 
-/* =========================================================
-   MODULE PAGE
-   ========================================================= */
-
-function ModulePage({
-  page,
-  setAiOpen,
-}) {
-  const icons = {
-    Subjects: BookOpen,
-    Tasks: CheckSquare,
-    Notes: FileText,
-    Goals: Target,
-    "Study Plan": CalendarDays,
-    Pomodoro: Timer,
-    "Habit Tracker": Flame,
-    Analytics: BarChart3,
-    "Placement Hub":
-      BriefcaseBusiness,
-    Leaderboard: Trophy,
-    "AI Mentor": Bot,
-    Settings: SettingsIcon,
-    "Help & Feedback":
-      HelpCircle,
-  };
-
-  const Icon =
-    icons[page] || BookOpen;
-
-  return (
-    <div className="module-page">
-      <div className="module-icon">
-        <Icon size={31} />
-      </div>
-
-      <span>STUDYOS MODULE</span>
-
-      <h1>{page}</h1>
-
-      <p>
-        {page} will be connected to your personalized
-        StudyOS data and backend.
-      </p>
-
-      <div className="module-actions">
-        <button
-          className="primary-button"
-          onClick={() => setAiOpen(true)}
-        >
-          <Bot size={17} />
-          Ask StudyOS AI
-        </button>
-
-        <button className="secondary-button">
-          <Plus size={17} />
-          Get Started
-        </button>
-      </div>
-    </div>
-  );
-}
 
 export default App;

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiRequest } from "./services/api.js";
 import {
   Trophy,
-  Medal,
   Flame,
   Zap,
   Target,
@@ -21,6 +21,27 @@ const PERIODS = [
 
 function Leaderboard() {
   const [period, setPeriod] = useState("week");
+  const [rankingsByPeriod, setRankingsByPeriod] = useState({});
+  const [streak, setStreak] = useState(0);
+  const rankings = rankingsByPeriod[period] || [];
+  const loading = !Object.hasOwn(rankingsByPeriod, period);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      apiRequest(`/leaderboard?period=${period}`),
+      apiRequest("/dashboard"),
+    ]).then(([rows, dashboard]) => {
+      if (!active) return;
+      setRankingsByPeriod((previous) => ({ ...previous, [period]: rows }));
+      setStreak(dashboard.stats.streak);
+    }).catch(() => {
+      if (active) setRankingsByPeriod((previous) => ({ ...previous, [period]: [] }));
+    });
+    return () => { active = false; };
+  }, [period]);
+
+  const currentUser = rankings.find((row) => row.isCurrentUser);
 
   return (
     <div className="leaderboard-page">
@@ -65,20 +86,20 @@ function Leaderboard() {
           <span>Your Position</span>
 
           <div className="your-rank-row">
-            <strong>—</strong>
-            <small>Rank will appear after students join</small>
+            <strong>{currentUser ? `#${currentUser.rank}` : "—"}</strong>
+            <small>{currentUser ? currentUser.name : "No rank available yet"}</small>
           </div>
         </div>
 
         <div className="your-stats">
           <div>
             <span>XP</span>
-            <strong>—</strong>
+            <strong>{currentUser?.xp ?? 0}</strong>
           </div>
 
           <div>
             <span>Streak</span>
-            <strong>—</strong>
+            <strong>{streak}</strong>
           </div>
         </div>
       </section>
@@ -89,17 +110,27 @@ function Leaderboard() {
           <div>
             <h2>Top Students</h2>
             <p>
-              Rankings will be calculated from real StudyOS
-              activity.
+              XP rankings from recorded StudyOS activity.
             </p>
           </div>
 
           <div className="leaderboard-status">
             <span className="status-dot" />
-            Waiting for data
+            {loading ? "Loading rankings" : `${rankings.length} ${rankings.length === 1 ? "student" : "students"}`}
           </div>
         </div>
 
+        {rankings.length ? (
+          <ol className="leaderboard-ranking-list">
+            {rankings.map((row) => (
+              <li className={row.isCurrentUser ? "leaderboard-ranking-current" : ""} key={row.id}>
+                <span className="leaderboard-ranking-rank">#{row.rank}</span>
+                <span className="leaderboard-ranking-name">{row.name}{row.isCurrentUser ? " (You)" : ""}</span>
+                <strong>{row.xp} XP</strong>
+              </li>
+            ))}
+          </ol>
+        ) : (
         <div className="leaderboard-empty">
           <div className="empty-trophy">
             <Trophy size={27} />
@@ -108,10 +139,10 @@ function Leaderboard() {
           <h3>No rankings yet</h3>
 
           <p>
-            Once students start using StudyOS, their real
-            activity will be converted into XP and rankings.
+            {loading ? "Loading rankings…" : "Rankings will appear as students record activity."}
           </p>
         </div>
+        )}
       </section>
 
       {/* HOW XP WILL WORK */}
@@ -120,8 +151,7 @@ function Leaderboard() {
           <div>
             <h2>How XP will be earned</h2>
             <p>
-              These activities will be connected to the
-              backend later.
+              XP is calculated from recorded study activity.
             </p>
           </div>
 

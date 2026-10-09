@@ -10,7 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+build
+coverage
 *.local
+.env*
+!.env.example
+!**/.env.example
+backend/.env*
+!backend/.env.example
+screenshots/
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Temporary Markdown and browser test artifacts
+markdown-check.html
+test-results/
+playwright-report/

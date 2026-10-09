@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { apiRequest, apiStreamRequest } from "./services/api.js";
+import MarkdownMessage, { MarkdownActions } from "./components/MarkdownMessage.jsx";
+import ErrorBanner from "./components/ErrorBanner.jsx";
 import {
   Bot,
   Sparkles,
@@ -37,6 +40,7 @@ import {
 } from "lucide-react";
 
 import "./AIMentor.css";
+import "./components/MarkdownMessage.css";
 
 const STORAGE_KEY = "studyos-ai-history";
 
@@ -175,7 +179,7 @@ function loadHistory() {
 
     const parsed = JSON.parse(saved);
 
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter((conversation) => conversation && typeof conversation === "object" && typeof conversation.id === "string").map((conversation) => ({ ...conversation, messages: Array.isArray(conversation.messages) ? conversation.messages.filter((message) => message && typeof message === "object") : [] })) : [];
   } catch {
     return [];
   }
@@ -207,7 +211,7 @@ function getChatTitle(messages) {
     : `${text.slice(0, 42)}...`;
 }
 
-export default function AIMentor({ navigate, onAIAction }) {
+export default function AIMentor() {
   const [conversations, setConversations] = useState(loadHistory);
   const [activeConversationId, setActiveConversationId] =
     useState(null);
@@ -226,6 +230,8 @@ export default function AIMentor({ navigate, onAIAction }) {
 
   const [isThinking, setIsThinking] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [chatError, setChatError] = useState(null);
+  const [autoScroll, setAutoScroll] = useState(true);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
@@ -238,13 +244,9 @@ export default function AIMentor({ navigate, onAIAction }) {
   const cameraVideoRef = useRef(null);
   const recognitionRef = useRef(null);
   const chatBottomRef = useRef(null);
+  const requestControllerRef = useRef(null);
 
-  const activeConversation =
-    conversations.find(
-      (conversation) =>
-        conversation.id === activeConversationId,
-    ) || null;
-
+  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) || null;
   const messages = activeConversation?.messages || [];
 
   const currentMode =
@@ -262,22 +264,10 @@ export default function AIMentor({ navigate, onAIAction }) {
     );
   }, [conversations]);
 
+  const latestMessageContent = messages[messages.length - 1]?.content;
   useEffect(() => {
-    if (
-      !activeConversationId &&
-      conversations.length > 0
-    ) {
-      setActiveConversationId(
-        conversations[0].id,
-      );
-    }
-  }, [activeConversationId, conversations]);
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  }, [messages.length, isThinking]);
+    if (autoScroll) chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, latestMessageContent, isThinking, autoScroll]);
 
   useEffect(() => {
     return () => {
@@ -597,37 +587,13 @@ export default function AIMentor({ navigate, onAIAction }) {
     recognition.start();
   };
 
-  const buildAIAction = (
-    action,
-    request,
-  ) => ({
-    action: action.id,
-    target: action.target,
-    request,
-    data: {},
-    source: "ai-mentor",
-    userScoped: true,
-    requiresConfirmation: true,
-    createdAt:
-      new Date().toISOString(),
-  });
-
-  const executeAction = (
+  const executeAction = async (
     action,
     request,
   ) => {
-    const structuredAction =
-      buildAIAction(
-        action,
-        request,
-      );
-
-    if (onAIAction) {
-      onAIAction(structuredAction);
-    }
-
     const conversationId =
       ensureConversation();
+    const actionRequestText = `${action.id} for ${action.target}. User request: ${request}`;
 
     addMessages(
       conversationId,
@@ -638,16 +604,6 @@ export default function AIMentor({ navigate, onAIAction }) {
           content: request,
           createdAt:
             new Date().toISOString(),
-          action: structuredAction,
-        },
-        {
-          id: createId(),
-          role: "assistant",
-          content:
-            `I understood this as a ${action.label} action for ${action.target}. The StudyOS action is ready for the secure backend and module connection.`,
-          action: structuredAction,
-          createdAt:
-            new Date().toISOString(),
         },
       ],
     );
@@ -656,28 +612,32 @@ export default function AIMentor({ navigate, onAIAction }) {
     setActionRequest("");
     setActionsOpen(false);
 
-    if (navigate) {
-      const targets = {
-        Tasks: "Tasks",
-        Goals: "Goals",
-        Notes: "Notes",
-        Subjects: "Subjects",
-        "Study Plan": "Study Plan",
-        "Habit Tracker":
-          "Habit Tracker",
-        Pomodoro: "Pomodoro",
-        "Placement Hub":
-          "Placement Hub",
-      };
-
-      const targetPage =
-        targets[action.target];
-
-      if (targetPage) {
-        setTimeout(() => {
-          navigate(targetPage);
-        }, 300);
+    setIsThinking(true);
+    try {
+      const response = await apiRequest("/ai/chat", {
+        method: "POST",
+        body: { message: actionRequestText, mode: "action", history: messages.slice(-20) },
+      });
+      addMessages(conversationId, [{
+        id: createId(),
+        role: "assistant",
+        content: response.message,
+        action: response.action,
+        confirmationId: response.confirmationRequired ? response.confirmationId : undefined,
+        createdAt: new Date().toISOString(),
+      }]);
+      if (response.action && !response.confirmationRequired) {
+        window.dispatchEvent(new Event("studyos-data-changed"));
       }
+    } catch (error) {
+      addMessages(conversationId, [{
+        id: createId(),
+        role: "assistant",
+        content: error.message || "The action request could not be completed.",
+        createdAt: new Date().toISOString(),
+      }]);
+    } finally {
+      setIsThinking(false);
     }
   };
 
@@ -702,7 +662,7 @@ export default function AIMentor({ navigate, onAIAction }) {
     );
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     const text = message.trim();
 
     if (
@@ -743,52 +703,109 @@ export default function AIMentor({ navigate, onAIAction }) {
 
     setMessage("");
     setAttachments([]);
+    setChatError(null);
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
     setIsThinking(true);
 
-    /*
-      BACKEND CONNECTION POINT
-
-      POST /api/ai/chat
-
-      {
-        message,
-        mode,
-        attachments,
-        userId
+    try {
+      await sendStreamingMessage(userMessage.content, conversationId, [...messages, userMessage], false, controller.signal);
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        setChatError(error);
+        addMessages(conversationId, [{
+        id: createId(),
+        role: "assistant",
+        content: error.message || "The AI request could not be completed.",
+        createdAt: new Date().toISOString(),
+        }]);
       }
+    } finally {
+      requestControllerRef.current = null;
+      setIsThinking(false);
+    }
+  };
 
-      React
-        ↓
-      Express
-        ↓
-      authenticated user_id
-        ↓
-      MySQL StudyOS data
-        ↓
-      AI service
-        ↓
-      structured response
-        ↓
-      StudyOS action dispatcher
-    */
+  const retryMessage = async (sourceMessage, continueAnswer = false) => {
+    if (isThinking) return;
+    const currentMessages = conversations.find((conversation) => conversation.id === activeConversationId)?.messages || [];
+    const prior = currentMessages.slice(0, currentMessages.findIndex((item) => item.id === sourceMessage.id));
+    const latestUser = [...prior].reverse().find((item) => item.role === "user");
+    if (!latestUser) return;
+    setChatError(null);
+    setIsThinking(true);
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
+    try {
+      await sendStreamingMessage(latestUser.content, activeConversationId, prior, continueAnswer, controller.signal);
+    } catch (error) { if (!controller.signal.aborted) setChatError(error); }
+    finally { requestControllerRef.current = null; setIsThinking(false); }
+  };
 
-    setTimeout(() => {
-      addMessages(
-        conversationId,
-        [
-          {
+  const sendStreamingMessage = async (text, conversationId, history, continueAnswer = false, signal) => {
+    const response = await apiStreamRequest("/ai/chat/stream", {
+      signal,
+      body: { message: text, history: history.slice(-20), continue: continueAnswer },
+    });
+    if (!response.ok || !response.body) throw new Error(`AI request failed (${response.status}).`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let complete = null;
+    let assistantId = createId();
+    addMessages(conversationId, [{ id: assistantId, role: "assistant", content: "", createdAt: new Date().toISOString() }]);
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const events = buffer.split("\n\n"); buffer = events.pop() || "";
+      for (const event of events) {
+        const line = event.split("\n").find((part) => part.startsWith("data: "));
+        if (!line) continue;
+        const payload = JSON.parse(line.slice(6));
+        if (payload.type === "error") throw Object.assign(new Error(payload.message), { status: payload.status, code: payload.code });
+        if (payload.type === "notice") setChatError({ title: "Local AI fallback", message: payload.message, retryable: false });
+        if (payload.type === "token") setConversations((previous) => previous.map((conversation) => conversation.id === conversationId ? { ...conversation, messages: conversation.messages.map((item) => item.id === assistantId ? { ...item, content: item.content + payload.text } : item) } : conversation));
+        if (payload.type === "done") complete = payload.response;
+      }
+    }
+    if (!complete) throw new Error("The AI stream ended before an answer was complete.");
+    setConversations((previous) => previous.map((conversation) => conversation.id === conversationId ? { ...conversation, messages: conversation.messages.map((item) => item.id === assistantId ? { ...item, truncated: complete.truncated, confirmationId: complete.confirmationId, action: complete.confirmationRequired ? complete.action : undefined } : item) } : conversation));
+    if (complete.action && !complete.confirmationRequired) window.dispatchEvent(new Event("studyos-data-changed"));
+    return complete;
+  };
+
+  const confirmAIAction = async (confirmationId, conversationId, messageId) => {
+    setIsThinking(true);
+    try {
+      const response = await apiRequest("/ai/chat", {
+        method: "POST",
+        body: { message: "Confirm the requested action.", confirmationId, confirm: true },
+      });
+      setConversations((previous) => previous.map((conversation) => conversation.id !== conversationId
+        ? conversation
+        : {
+          ...conversation,
+          messages: conversation.messages.map((item) => item.id === messageId
+            ? { ...item, confirmationId: undefined, confirmationComplete: true }
+            : item).concat({
             id: createId(),
             role: "assistant",
-            content:
-              "Your StudyOS AI service will answer here after the backend and AI provider are connected. The workspace is already prepared for questions, exam preparation, placement preparation, file/image analysis, voice input and StudyOS actions.",
-            createdAt:
-              new Date().toISOString(),
-          },
-        ],
-      );
-
+            content: response.message,
+            createdAt: new Date().toISOString(),
+          }),
+        }));
+      window.dispatchEvent(new Event("studyos-data-changed"));
+    } catch (error) {
+      addMessages(conversationId, [{
+        id: createId(),
+        role: "assistant",
+        content: error.message || "The action could not be completed.",
+        createdAt: new Date().toISOString(),
+      }]);
+    } finally {
       setIsThinking(false);
-    }, 700);
+    }
   };
 
   const handleTextareaKeyDown = (
@@ -801,6 +818,13 @@ export default function AIMentor({ navigate, onAIAction }) {
       event.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleComposerChange = (event) => {
+    const element = event.target;
+    setMessage(element.value);
+    element.style.height = "auto";
+    element.style.height = `${Math.min(element.scrollHeight, 192)}px`;
   };
 
   const handleQuickPrompt = (
@@ -1096,7 +1120,11 @@ export default function AIMentor({ navigate, onAIAction }) {
           </div>
         </div>
 
-        <div className="ai-chat-content">
+        <div className="ai-chat-content" onScroll={(event) => {
+          const element = event.currentTarget;
+          setAutoScroll(element.scrollHeight - element.scrollTop - element.clientHeight < 72);
+        }}>
+          {chatError && <ErrorBanner error={chatError} onRetry={() => retryMessage(messages[messages.length - 1], false)} />}
           {messages.length === 0 ? (
             <div className="ai-welcome">
               <div className="ai-welcome-icon">
@@ -1311,29 +1339,27 @@ export default function AIMentor({ navigate, onAIAction }) {
                   className={`ai-message ${
                     item.role === "user"
                       ? "user"
-                      : ""
+                      : "assistant"
                   }`}
                 >
-                  <div className="ai-message-avatar">
-                    {item.role ===
-                    "assistant" ? (
-                      <Bot size={15} />
-                    ) : (
-                      <span>S</span>
-                    )}
-                  </div>
+                  {item.role === "assistant" && <div className="ai-message-avatar"><Bot size={15} /></div>}
 
                   <div className="ai-message-body">
-                    <div className="ai-message-name">
-                      {item.role ===
-                      "assistant"
-                        ? "StudyOS AI"
-                        : "You"}
-                    </div>
+                    {item.role === "assistant" && <div className="ai-message-name">StudyOS AI</div>}
 
-                    <div className="ai-message-bubble">
-                      {item.content}
-                    </div>
+                    <div className="ai-message-bubble"><MarkdownMessage text={item.content} /></div>
+                    {item.role === "assistant" && <MarkdownActions text={item.content} onRegenerate={() => retryMessage(item)} onContinue={item.truncated ? () => retryMessage(item, true) : undefined} />}
+
+                    {item.confirmationId && (
+                      <button
+                        className="ai-message-confirm"
+                        type="button"
+                        disabled={isThinking}
+                        onClick={() => confirmAIAction(item.confirmationId, activeConversationId, item.id)}
+                      >
+                        Confirm {item.action?.replace(/^delete/, "delete ").replace(/^./, (letter) => letter.toUpperCase())}
+                      </button>
+                    )}
 
                     {item.attachments
                       ?.length > 0 && (
@@ -1369,6 +1395,7 @@ export default function AIMentor({ navigate, onAIAction }) {
                         {item.action.target}
                       </div>
                     )}
+                    {item.role === "assistant" && <MarkdownActions text={item.content} onRegenerate={() => retryMessage(item)} onContinue={item.truncated ? () => retryMessage(item, true) : undefined} />}
                   </div>
                 </div>
               ))}
@@ -1402,6 +1429,7 @@ export default function AIMentor({ navigate, onAIAction }) {
             COMPOSER
             ================================================= */}
 
+        {!autoScroll && messages.length > 0 && <button type="button" className="ai-scroll-bottom" onClick={() => { setAutoScroll(true); chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }}>Scroll to bottom</button>}
         <div className="ai-composer-section">
           {/* Actions popup */}
 
@@ -1539,18 +1567,14 @@ export default function AIMentor({ navigate, onAIAction }) {
             <textarea
               ref={textareaRef}
               value={message}
-              onChange={(event) =>
-                setMessage(
-                  event.target.value,
-                )
-              }
+              onChange={handleComposerChange}
               onKeyDown={
                 handleTextareaKeyDown
               }
               placeholder={
                 mode === "exam"
-                  ? "Ask anything for your exam preparation..."
-                  : "Ask anything about your studies..."
+                  ? "Message StudyOS AI..."
+                  : "Message StudyOS AI..."
               }
               rows={1}
             />
@@ -1615,11 +1639,11 @@ export default function AIMentor({ navigate, onAIAction }) {
                   ? "enabled"
                   : ""
               }`}
-              disabled={!hasMessage}
-              onClick={sendMessage}
+              disabled={!hasMessage && !isThinking}
+              onClick={isThinking ? () => requestControllerRef.current?.abort() : sendMessage}
               title="Send"
             >
-              <Send size={16} />
+              {isThinking ? <X size={16} /> : <Send size={16} />}
             </button>
           </div>
 
@@ -1693,7 +1717,7 @@ export default function AIMentor({ navigate, onAIAction }) {
                             {mode ===
                               item.id && (
                               <b>
-                                ✓
+                                &#x2713;
                               </b>
                             )}
                           </button>
@@ -1746,7 +1770,7 @@ export default function AIMentor({ navigate, onAIAction }) {
             </div>
 
             <span className="ai-send-hint">
-              Enter to send · Shift +
+              Enter to send - Shift +
               Enter for new line
             </span>
           </div>

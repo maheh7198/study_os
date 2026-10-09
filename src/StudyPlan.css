@@ -1918,6 +1918,23 @@
     padding: 0 8px;
   }
 
+  .studyplan-date-navigation > button,
+  .studyplan-calendar-header button,
+  .studyplan-side-title > button {
+    min-width: 40px;
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+
+  .studyplan-date-navigation > button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .studyplan-date-navigation .studyplan-today-btn {
+    width: auto;
+  }
+
   .studyplan-day-card,
   .studyplan-week-view,
   .studyplan-month-view,

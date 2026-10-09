@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useRemoteCollection } from "./services/useRemoteCollection.js";
 import "./Analytics.css";
 
 import {
@@ -201,18 +202,19 @@ function getActivityIcon(type) {
 export default function Analytics() {
   const [range, setRange] = useState("7");
   const [aiPrompt, setAiPrompt] = useState("");
+  const [subjects, setSubjects] = useState(() => readStorage(STORAGE_KEYS.subjects));
+  const [tasks, setTasks] = useState(() => readStorage(STORAGE_KEYS.tasks));
+  const [pomodoroSessions, setPomodoroSessions] = useState(() => readStorage(STORAGE_KEYS.pomodoro));
+  const [habits, setHabits] = useState(() => readStorage(STORAGE_KEYS.habits));
+  const [studyPlanSessions, setStudyPlanSessions] = useState(() => readStorage(STORAGE_KEYS.studyPlanSessions));
+
+  useRemoteCollection("subjects", subjects, setSubjects);
+  useRemoteCollection("tasks", tasks, setTasks);
+  useRemoteCollection("pomodoros", pomodoroSessions, setPomodoroSessions);
+  useRemoteCollection("habits", habits, setHabits);
+  useRemoteCollection("study-plans/sessions", studyPlanSessions, setStudyPlanSessions);
 
   const analytics = useMemo(() => {
-    const subjects = readStorage(STORAGE_KEYS.subjects);
-    const tasks = readStorage(STORAGE_KEYS.tasks);
-    const pomodoroSessions = readStorage(
-      STORAGE_KEYS.pomodoro
-    );
-    const habits = readStorage(STORAGE_KEYS.habits);
-    const studyPlanSessions = readStorage(
-      STORAGE_KEYS.studyPlanSessions
-    );
-
     const days = Number(range);
 
     /* =========================================
@@ -834,7 +836,7 @@ export default function Analytics() {
 
       hasData,
     };
-  }, [range]);
+  }, [range, subjects, tasks, pomodoroSessions, habits, studyPlanSessions]);
 
   /* =========================================
      KPI DATA

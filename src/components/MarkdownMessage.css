@@ -1,0 +1,37 @@
+.markdown-message {
+  min-width: 0;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.markdown-message > :first-child { margin-top: 0; }
+.markdown-message > :last-child { margin-bottom: 0; }
+.markdown-message p { margin: 0 0 1em; }
+.markdown-message h1, .markdown-message h2, .markdown-message h3 { color: var(--text); line-height: 1.35; margin: 1.25em 0 .55em; }
+.markdown-message h1 { font-size: 20px; }
+.markdown-message h2 { font-size: 18px; }
+.markdown-message h3 { font-size: 17px; }
+.markdown-message ul, .markdown-message ol { margin: .45em 0 1em; padding-left: 1.5em; }
+.markdown-message li { padding-left: .2em; margin: .25em 0; }
+.markdown-message li > ul, .markdown-message li > ol { margin: .25em 0; }
+.markdown-message blockquote { margin: 1em 0; padding: .2em 1em; border-left: 3px solid var(--primary); color: var(--muted); }
+.markdown-message a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-message hr { border: 0; border-top: 1px solid var(--border); margin: 1.4em 0; }
+.markdown-inline-code { padding: .12em .35em; border-radius: 5px; color: var(--text); background: var(--surface-3); font-family: ui-monospace, "JetBrains Mono", Consolas, monospace; font-size: .88em; }
+.markdown-table-scroll { max-width: 100%; overflow-x: auto; margin: 1em 0; border: 1px solid var(--border); border-radius: 10px; }
+.markdown-message table { width: 100%; border-collapse: collapse; }
+.markdown-message th, .markdown-message td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+.markdown-message th { background: var(--surface-2); font-weight: 700; }
+.markdown-code-block { max-width: 100%; overflow: hidden; margin: 1em 0; border: 1px solid var(--border); border-radius: 12px; background: var(--code-surface); color: var(--code-text); }
+.markdown-code-header { height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; color: var(--code-muted); background: var(--code-header); font-size: 12px; }
+.markdown-code-header button { padding: 5px 9px; border: 1px solid var(--code-border); border-radius: 6px; color: var(--code-text); background: transparent; cursor: pointer; font-size: 12px; }
+.markdown-code-block pre { max-width: 100%; overflow-x: auto; margin: 0; padding: 14px 16px; font: 14px/1.65 ui-monospace, "JetBrains Mono", Consolas, monospace; tab-size: 4; }
+.markdown-code-block code { font: inherit; white-space: pre; }
+.markdown-actions { display: flex; gap: 6px; margin-top: 10px; }
+.markdown-actions button { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); background: transparent; cursor: pointer; font-size: 12px; }
+.ai-scroll-bottom { position: sticky; bottom: 8px; z-index: 2; display: block; margin: 0 auto; padding: 7px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--text); background: var(--card); box-shadow: var(--shadow-sm); cursor: pointer; }
+.studyos { --code-surface: var(--surface-2); --code-header: var(--surface-3); --code-text: var(--text); --code-muted: var(--muted); --code-border: var(--border); }
+
+.studyos.night .markdown-inline-code { color: var(--text); }

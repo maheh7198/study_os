@@ -18,6 +18,7 @@ import Card from "./components/Card.jsx";
 import Field from "./components/Field.jsx";
 import Modal from "./components/Modal.jsx";
 import PageHeader from "./components/PageHeader.jsx";
+import { apiRequest } from "./services/api.js";
 
 // Settings page stores the app profile and preferences that are shared across the shell UI.
 const STORAGE_KEY = "studyos-settings";
@@ -30,7 +31,10 @@ const STUDYOS_KEYS = [
   "studyos-notifications",
   "studyos-placement-hub",
   "studyos-pomodoro-sessions",
+  "studyos-pomodoro-active-timer",
   "studyos-study-plans",
+  "studyos-studyplan-sessions",
+  "studyos-study-timetable",
   "studyos-ai-history",
   "studyos-task-reminders-sent",
   "studyos-notifications-version",
@@ -89,7 +93,7 @@ export default function Settings() {
     setToast("Saved");
   };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     const trimmedName = settings.profileName.trim();
     const nextErrors = {};
 
@@ -102,14 +106,29 @@ export default function Settings() {
       return;
     }
 
-    const nextSettings = { ...settings, profileName: trimmedName };
-    setSettings(nextSettings);
-    saveSettings(nextSettings);
-    setToast("Saved");
+    try {
+      await apiRequest("/profile", {
+        method: "PUT",
+        body: { name: trimmedName },
+      });
+      const nextSettings = { ...settings, profileName: trimmedName };
+      setSettings(nextSettings);
+      saveSettings(nextSettings);
+      setToast("Saved");
+    } catch (error) {
+      setErrors({ profile: error.message || "Profile could not be saved." });
+    }
   };
 
-  const clearStudyData = () => {
+  const clearStudyData = async () => {
+    try {
+      await apiRequest("/data", { method: "DELETE" });
+    } catch (error) {
+      setToast(error.message || "Study data could not be cleared.");
+      return;
+    }
     STUDYOS_KEYS.forEach((key) => localStorage.removeItem(key));
+    window.dispatchEvent(new Event("studyos-data-changed"));
     setShowClearModal(false);
     setToast("Data cleared");
   };
@@ -156,6 +175,7 @@ export default function Settings() {
               placeholder="Enter your name"
             />
             {errors.profileName ? <span className="field-error">{errors.profileName}</span> : null}
+            {errors.profile ? <span className="field-error" role="alert">{errors.profile}</span> : null}
           </Field>
 
           <Field label="Email (optional)">

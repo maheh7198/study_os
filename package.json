@@ -7,14 +7,23 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test:markdown": "playwright test",
+    "check:mapper": "node src/api/httpErrors.check.js",
+    "check:console": "node scripts/check-console.mjs",
+    "check:login": "node scripts/check-login.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
+    "highlight.js": "^11.12.0",
     "lucide-react": "^1.47.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
